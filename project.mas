@@ -1,0 +1,19 @@
+{
+  name "flow"
+  author "Mandal Dev"
+  desc "a network io lib"
+  license "GPLv3"
+
+  target {
+    flow {
+      language "c++"
+      std "c++17"
+      type "slib"
+
+      src [
+        "src/Flower.cpp"
+        "src/Socket.cpp"
+      ]
+    }
+  }
+}
