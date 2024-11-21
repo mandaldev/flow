@@ -15,5 +15,21 @@
         "src/Socket.cpp"
       ]
     }
+
+    learn_tcp {
+      language "c++"
+      std "c++17"
+      type "exe"
+
+      src [
+        "learn/main.cpp"
+        "learn/tcp_server.cpp"
+        "learn/tcp_client.cpp"
+      ]
+
+      dep [
+        "Com"
+      ]
+    }
   }
 }
