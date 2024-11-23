@@ -28,11 +28,7 @@ extern "C" {
 
 namespace Flow {
 
-struct IPv4Addr
-{
-	std::string ip;
-	uint16_t port = 0;
-};
+std::error_code get_error(int e = errno);
 
 /// socket interface - wrapper of system socket api
 class Socket
@@ -63,8 +59,6 @@ public:
 
 	std::error_code bind(sockaddr const &addr, socklen_t addr_len) const;
 
-	std::error_code bind(IPv4Addr const &addr) const;
-
 	/// The behavior of the `backlog` argument on TCP sockets changed with Linux 2.2.
 	/// Now it specifies the queue length for completely established sockets waiting
 	/// to be accepted, instead of the number of incomplete connection requests.
@@ -78,14 +72,7 @@ public:
 		int flags
 	) const;
 
-	/// ipv4 socket accept.
-	/// if accept succeed but address converting fails, error is returned
-	/// and client socket is closed
-	std::variant<std::error_code, Socket> accept(IPv4Addr &addr, int flags) const;
-
 	std::error_code connect(sockaddr const &addr, socklen_t addr_len) const;
-
-	std::error_code connect(IPv4Addr const &addr) const;
 
 	bool is_created() const;
 
@@ -96,11 +83,7 @@ public:
 
 	std::error_code get_name(sockaddr &addr, socklen_t &addr_len) const;
 
-	std::error_code get_name(IPv4Addr &addr) const;
-
 	std::error_code get_peer_name(sockaddr &addr, socklen_t &addr_len) const;
-
-	std::error_code get_peer_name(IPv4Addr &addr) const;
 
 private:
 	int _fd = -1;

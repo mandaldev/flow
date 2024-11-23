@@ -23,34 +23,9 @@ extern "C" {
 
 namespace Flow {
 
-static inline std::error_code get_error(int e = errno)
+std::error_code get_error(int e)
 {
 	return std::make_error_code(std::errc(e));
-}
-
-static std::error_code convert_addr(sockaddr_in &in, IPv4Addr &out)
-{
-	char buf[INET_ADDRSTRLEN] = "";
-	if (!inet_ntop(in.sin_family, &in.sin_addr, buf, INET_ADDRSTRLEN)) {
-		return get_error();
-	}
-	out.ip = buf;
-	out.port = ntohs(in.sin_port);
-	return {};
-}
-
-static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
-{
-	out.sin_family = AF_INET;
-	out.sin_port = htons(in.port);
-	switch (inet_pton(AF_INET, in.ip.c_str(), &out.sin_addr)) {
-	case 0:
-		return {};
-	case 1:
-		return std::make_error_code(std::errc::invalid_argument);
-	default:
-		return get_error();
-	}
 }
 
 Socket::Socket(Socket && o)
@@ -98,15 +73,6 @@ std::error_code Socket::bind(sockaddr const &addr, socklen_t addr_len) const
 	return get_error(::bind(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }
 
-std::error_code Socket::bind(IPv4Addr const &addr) const
-{
-	sockaddr_in out{};
-	if (auto ec = convert_addr(addr, out)) {
-		return ec;
-	}
-	return bind((sockaddr&)out, sizeof(out));
-}
-
 std::error_code Socket::listen(int backlog) const
 {
 	return get_error(::listen(_fd, backlog) == 0 ? 0 : errno);
@@ -122,36 +88,9 @@ std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &
 	return get_error();
 }
 
-std::variant<std::error_code, Socket> Socket::accept(IPv4Addr &addr, int flags) const
-{
-	sockaddr_in in{};
-	socklen_t len = sizeof(in);
-	auto var = accept((sockaddr&)in, len, flags);
-	if (std::holds_alternative<std::error_code>(var)) {
-		return var;
-	}
-	if (len != sizeof(in)) {
-		return std::make_error_code(std::errc::invalid_argument);
-	}
-	auto ec = convert_addr(in, addr);
-	if (ec) {
-		return ec;
-	}
-	return var;
-}
-
 std::error_code Socket::connect(sockaddr const &addr, socklen_t addr_len) const
 {
 	return get_error(::connect(_fd, &addr, addr_len) == 0 ? 0 : errno);
-}
-
-std::error_code Socket::connect(IPv4Addr const &addr) const
-{
-	sockaddr_in out{};
-	if (auto ec = convert_addr(addr, out)) {
-		return ec;
-	}
-	return connect((sockaddr&)out, sizeof(out));
 }
 
 bool Socket::is_created() const
@@ -189,40 +128,12 @@ std::error_code Socket::get_name(sockaddr &addr, socklen_t &addr_len) const
 	return {};
 }
 
-std::error_code Socket::get_name(IPv4Addr &addr) const
-{
-	sockaddr_in in{};
-	socklen_t len = sizeof(in);
-	auto ec = get_name((sockaddr&)in, len);
-	if (ec) {
-		return ec;
-	}
-	if (len != sizeof(in)) {
-		return std::make_error_code(std::errc::invalid_argument);
-	}
-	return convert_addr(in, addr);
-}
-
 std::error_code Socket::get_peer_name(sockaddr &addr, socklen_t &addr_len) const
 {
 	if (0 == getpeername(_fd, &addr, &addr_len)) {
 		return get_error();
 	}
 	return {};
-}
-
-std::error_code Socket::get_peer_name(IPv4Addr &addr) const
-{
-	sockaddr_in in{};
-	socklen_t len = sizeof(in);
-	auto ec = get_peer_name((sockaddr&)in, len);
-	if (ec) {
-		return ec;
-	}
-	if (len != sizeof(in)) {
-		return std::make_error_code(std::errc::invalid_argument);
-	}
-	return convert_addr(in, addr);
 }
 
 }
