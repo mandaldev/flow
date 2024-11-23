@@ -75,6 +75,7 @@ std::error_code Socket::Attach(Socket &o)
 	}
 	_fd = o._fd;
 	o._fd = -1;
+	return {};
 }
 
 std::error_code Socket::create(int domain, int type, int protocol)
