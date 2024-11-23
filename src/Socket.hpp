@@ -78,6 +78,9 @@ public:
 		int flags
 	) const;
 
+	/// ipv4 socket accept.
+	/// if accept succeed but address converting fails, error is returned
+	/// and client socket is closed
 	std::variant<std::error_code, Socket> accept(IPv4Addr &addr, int flags) const;
 
 	std::error_code connect(sockaddr const &addr, socklen_t addr_len) const;
