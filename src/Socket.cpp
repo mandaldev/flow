@@ -100,9 +100,9 @@ std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &
 std::variant<std::error_code, Socket> Socket::accept(IPv4Addr &addr, int flags) const
 {
 	sockaddr_in in{};
-	socklen_t len = sizeof(sockaddr_in);
+	socklen_t len = sizeof(in);
 	auto var = accept((sockaddr&)in, len, flags);
-	if (std::holds_alternative<std::error_code>(var)) {
+	if (std::holds_alternative<std::error_code>(var) || len != sizeof(in)) {
 		return var;
 	}
 	convert_addr(in, addr);
