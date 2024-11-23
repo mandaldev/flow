@@ -16,20 +16,22 @@
 #ifndef _FLOW_SRC_SOCKET_HPP_
 #define _FLOW_SRC_SOCKET_HPP_
 #include <memory>
-#include <functional>
 #include <string>
 #include <system_error>
 #include <string_view>
-#include <sys/socket.h>
 #include <variant>
+
+extern "C" {
+#include <sys/socket.h>
+}
 
 namespace Flow {
 
-// struct IPv4Addr
-// {
-// 	std::string ip;
-// 	uint16_t port = 0;
-// };
+struct IPv4Addr
+{
+	std::string ip;
+	uint16_t port = 0;
+};
 
 /// socket interface - wrapper of system socket api
 class Socket
@@ -40,7 +42,9 @@ public:
 
 	std::error_code close();
 
-	std::error_code bind(struct sockaddr const &addr, socklen_t addr_len) const;
+	std::error_code bind(sockaddr const &addr, socklen_t addr_len) const;
+
+	std::error_code bind(IPv4Addr const &addr) const;
 
 	/// The behavior of the `backlog` argument on TCP sockets changed with Linux 2.2.
 	/// Now it specifies the queue length for completely established sockets waiting
@@ -49,13 +53,17 @@ public:
 
 	/// as accept4
 	std::variant<std::error_code, Socket> accept(
-		struct sockaddr &addr,
+		sockaddr &addr,
 		/// in & out
 		socklen_t &addr_len,
 		int flags
 	) const;
 
-	std::error_code connect(struct sockaddr const &addr, socklen_t addr_len) const;
+	std::variant<std::error_code, Socket> accept(IPv4Addr &addr, int flags) const;
+
+	std::error_code connect(sockaddr const &addr, socklen_t addr_len) const;
+
+	std::error_code connect(IPv4Addr const &addr) const;
 
 	bool is_created() const;
 

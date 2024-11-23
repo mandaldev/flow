@@ -15,13 +15,42 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Socket.hpp"
 #include <cstring>
+
+extern "C" {
 #include <unistd.h>
+#include <arpa/inet.h>
+}
 
 namespace Flow {
 
 static inline std::error_code get_error(int e = errno)
 {
 	return std::make_error_code(std::errc(e));
+}
+
+static std::error_code convert_addr(sockaddr_in &in, IPv4Addr &out)
+{
+	char buf[INET_ADDRSTRLEN] = "";
+	if (!inet_ntop(in.sin_family, &in.sin_addr, buf, INET_ADDRSTRLEN)) {
+		return get_error();
+	}
+	out.ip = buf;
+	out.port = ntohs(in.sin_port);
+	return {};
+}
+
+static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
+{
+	out.sin_family = AF_INET;
+	out.sin_port = htons(in.port);
+	switch (inet_pton(AF_INET, in.ip.c_str(), &out.sin_addr)) {
+	case 0:
+		return {};
+	case 1:
+		return std::make_error_code(std::errc::invalid_argument);
+	default:
+		return get_error();
+	}
 }
 
 std::error_code Socket::create(int domain, int type, int protocol)
@@ -44,6 +73,15 @@ std::error_code Socket::bind(sockaddr const &addr, socklen_t addr_len) const
 	return get_error(::bind(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }
 
+std::error_code Socket::bind(IPv4Addr const &addr) const
+{
+	sockaddr_in out{};
+	if (auto ec = convert_addr(addr, out)) {
+		return ec;
+	}
+	return bind((sockaddr&)out, sizeof(out));
+}
+
 std::error_code Socket::listen(int backlog) const
 {
 	return get_error(::listen(_fd, backlog) == 0 ? 0 : errno);
@@ -59,9 +97,30 @@ std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &
 	return get_error();
 }
 
+std::variant<std::error_code, Socket> Socket::accept(IPv4Addr &addr, int flags) const
+{
+	sockaddr_in in{};
+	socklen_t len = sizeof(sockaddr_in);
+	auto var = accept((sockaddr&)in, len, flags);
+	if (std::holds_alternative<std::error_code>(var)) {
+		return var;
+	}
+	convert_addr(in, addr);
+	return var;
+}
+
 std::error_code Socket::connect(sockaddr const &addr, socklen_t addr_len) const
 {
 	return get_error(::connect(_fd, &addr, addr_len) == 0 ? 0 : errno);
+}
+
+std::error_code Socket::connect(IPv4Addr const &addr) const
+{
+	sockaddr_in out{};
+	if (auto ec = convert_addr(addr, out)) {
+		return ec;
+	}
+	return connect((sockaddr&)out, sizeof(out));
 }
 
 bool Socket::is_created() const
