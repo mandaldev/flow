@@ -91,6 +91,14 @@ public:
 
 	std::error_code write(std::string_view const &bytes, size_t &writen_count) const;
 
+	std::error_code get_name(sockaddr &addr, socklen_t &addr_len) const;
+
+	std::error_code get_name(IPv4Addr &addr) const;
+
+	std::error_code get_peer_name(sockaddr &addr, socklen_t &addr_len) const;
+
+	std::error_code get_peer_name(IPv4Addr &addr) const;
+
 private:
 	int _fd = -1;
 };

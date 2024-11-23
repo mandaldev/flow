@@ -174,4 +174,48 @@ std::error_code Socket::write(std::string_view const &bytes, size_t &writen_coun
 	return get_error();
 }
 
+std::error_code Socket::get_name(sockaddr &addr, socklen_t &addr_len) const
+{
+	if (0 == getsockname(_fd, &addr, &addr_len)) {
+		return get_error();
+	}
+	return {};
+}
+
+std::error_code Socket::get_name(IPv4Addr &addr) const
+{
+	sockaddr_in in{};
+	socklen_t len = sizeof(in);
+	auto ec = get_name((sockaddr&)in, len);
+	if (ec) {
+		return ec;
+	}
+	if (len != sizeof(in)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	return convert_addr(in, addr);
+}
+
+std::error_code Socket::get_peer_name(sockaddr &addr, socklen_t &addr_len) const
+{
+	if (0 == getpeername(_fd, &addr, &addr_len)) {
+		return get_error();
+	}
+	return {};
+}
+
+std::error_code Socket::get_peer_name(IPv4Addr &addr) const
+{
+	sockaddr_in in{};
+	socklen_t len = sizeof(in);
+	auto ec = get_peer_name((sockaddr&)in, len);
+	if (ec) {
+		return ec;
+	}
+	if (len != sizeof(in)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	return convert_addr(in, addr);
+}
+
 }
