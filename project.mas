@@ -14,6 +14,10 @@
         "src/Flower.cpp"
         "src/Socket.cpp"
       ]
+
+      dep [
+        "Com"
+      ]
     }
 
     learn_tcp {

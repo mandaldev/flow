@@ -20,6 +20,7 @@
 #include <system_error>
 #include <string_view>
 #include <variant>
+#include <Com/raii.hpp>
 
 extern "C" {
 #include <sys/socket.h>
@@ -35,8 +36,26 @@ struct IPv4Addr
 
 /// socket interface - wrapper of system socket api
 class Socket
+: Com::Unique
 {
 public:
+	Socket() = default;
+
+	Socket(Socket const &) = delete;
+	Socket &operator=(Socket const &) = delete;
+	/// assigning need close itself first, and error can happen,
+	/// so... use `Attach`
+	Socket &operator=(Socket &&o) = delete;
+
+	Socket(Socket &&o);
+
+	/// close socket if it's created
+	~Socket();
+
+	/// attach other socket (like move-assign).
+	/// if error happens (closing socket), `o` is untouched
+	std::error_code Attach(Socket &o);
+
 	/// create new socket no matter of if this `Socket` is created or not
 	std::error_code create(int domain, int type, int protocol);
 

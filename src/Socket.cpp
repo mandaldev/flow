@@ -53,6 +53,30 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	}
 }
 
+Socket::Socket(Socket && o)
+: _fd(o._fd)
+{
+	o._fd = -1;
+}
+
+Socket::~Socket()
+{
+	if (is_created()) {
+		close();
+	}
+}
+
+std::error_code Socket::Attach(Socket &o)
+{
+	if (is_created()) {
+		if (auto ec = close()) {
+			return ec;
+		}
+	}
+	_fd = o._fd;
+	o._fd = -1;
+}
+
 std::error_code Socket::create(int domain, int type, int protocol)
 {
 	_fd = socket(domain, type, protocol);
