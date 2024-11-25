@@ -26,7 +26,7 @@ struct IPv4Addr
 };
 
 class IPv4Socket
-: public Socket
+: public virtual Socket
 {
 public:
 	IPv4Socket() = default;
