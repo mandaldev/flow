@@ -48,24 +48,34 @@ ErrType SetupFlowerFailedError::type() const
 	return ErrType::SetupFlowerFailed;
 }
 
+ErrType ShutdownFlowerFailedError::type() const
+{
+	return ErrType::ShutdownFlowerFailed;
+}
+
+void FlowError::flow(int fd)
+{
+	_fd = fd;
+}
+
+int FlowError::flow() const
+{
+	return _fd;
+}
+
 ErrType AddFlowFailedError::type() const
 {
 	return ErrType::AddFlowFailed;
 }
 
-void AddFlowFailedError::flow(int fd)
+ErrType RemoveFlowFailedError::type() const
 {
-	_fd = fd;
+	return ErrType::RemoveFlowFailed;
 }
 
-int AddFlowFailedError::flow() const
+ErrType FlowEventError::type() const
 {
-	return _fd;
-}
-
-ErrType ShutdownFlowerFailedError::type() const
-{
-	return ErrType::ShutdownFlowerFailed;
+	return ErrType::FlowEvent;
 }
 
 }

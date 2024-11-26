@@ -30,6 +30,9 @@ enum class ErrType
 	ShutdownFlowerFailed,
 	/// failed to add a flow (fd) to event loop
 	AddFlowFailed,
+	RemoveFlowFailed,
+	/// error occured while waiting flow events
+	FlowEvent,
 };
 
 
@@ -73,12 +76,10 @@ public:
 	ErrType type() const override;
 };
 
-class AddFlowFailedError
+class FlowError
 : public SystemError
 {
 public:
-	ErrType type() const override;
-
 	/// the flow fd failed to add
 	void flow(int fd);
 
@@ -87,6 +88,27 @@ public:
 
 private:
 	int _fd = -1;
+};
+
+class AddFlowFailedError
+: public FlowError
+{
+public:
+	ErrType type() const override;
+};
+
+class RemoveFlowFailedError
+: public FlowError
+{
+public:
+	ErrType type() const override;
+};
+
+class FlowEventError
+: public FlowError
+{
+public:
+	ErrType type() const override;
 };
 
 }
