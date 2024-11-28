@@ -73,7 +73,7 @@ std::error_code Socket::bind(sockaddr const &addr, socklen_t addr_len) const
 	return get_error(::bind(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }
 
-std::error_code Socket::listen(int backlog) const
+std::error_code Socket::listen(int backlog)
 {
 	return get_error(::listen(_fd, backlog) == 0 ? 0 : errno);
 }
@@ -88,7 +88,17 @@ std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &
 	return get_error();
 }
 
-std::error_code Socket::connect(sockaddr const &addr, socklen_t addr_len) const
+std::variant<std::error_code, Socket> Socket::accept(int flags) const
+{
+	Socket s;
+	s._fd = ::accept4(_fd, nullptr, nullptr, flags);
+	if (s.is_created()) {
+		return s;
+	}
+	return get_error();
+}
+
+std::error_code Socket::connect(sockaddr const &addr, socklen_t addr_len)
 {
 	return get_error(::connect(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }

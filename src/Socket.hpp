@@ -55,14 +55,14 @@ public:
 	/// create new socket no matter of if this `Socket` is created or not
 	std::error_code create(int domain, int type, int protocol);
 
-	std::error_code close();
+	virtual std::error_code close();
 
 	std::error_code bind(sockaddr const &addr, socklen_t addr_len) const;
 
 	/// The behavior of the `backlog` argument on TCP sockets changed with Linux 2.2.
 	/// Now it specifies the queue length for completely established sockets waiting
 	/// to be accepted, instead of the number of incomplete connection requests.
-	std::error_code listen(int backlog) const;
+	virtual std::error_code listen(int backlog);
 
 	/// as accept4
 	std::variant<std::error_code, Socket> accept(
@@ -72,7 +72,10 @@ public:
 		int flags
 	) const;
 
-	std::error_code connect(sockaddr const &addr, socklen_t addr_len) const;
+	/// if you dont need know the address
+	std::variant<std::error_code, Socket> accept(int flags) const;
+
+	virtual std::error_code connect(sockaddr const &addr, socklen_t addr_len);
 
 	bool is_created() const;
 

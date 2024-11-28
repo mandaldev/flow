@@ -79,7 +79,7 @@ std::variant<std::error_code, IPv4Socket> IPv4Socket::accept(IPv4Addr &addr, int
 	return std::get<Socket>(std::move(var));
 }
 
-std::error_code IPv4Socket::connect(IPv4Addr const &addr) const
+std::error_code IPv4Socket::connect(IPv4Addr const &addr)
 {
 	sockaddr_in out{};
 	if (auto ec = convert_addr(addr, out)) {
