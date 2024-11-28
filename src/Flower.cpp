@@ -181,13 +181,14 @@ void Flower::do_add_flow(int fd, Action const &action, std::function<void(std::s
 	if (0 == epoll_ctl(_epoll, EPOLL_CTL_ADD, fd, &event)) {
 		std::unique_lock<std::shared_mutex> locker(_mtx_listeners);
 		_listeners[fd] = std::make_shared<Action>(action);
-		return;
-	}
-
-	auto ec = std::make_error_code(std::errc(errno));
-	if (done) {
+		err.reset();
+	} else {
+		auto ec = std::make_error_code(std::errc(errno));
 		err->code(ec);
 		err->message("Failed to add flow");
+	}
+
+	if (done) {
 		done(err);
 	}
 }
@@ -209,12 +210,13 @@ void Flower::do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> 
 	if (0 == epoll_ctl(_epoll, EPOLL_CTL_DEL, fd, nullptr)) {
 		std::unique_lock<std::shared_mutex> locker(_mtx_listeners);
 		_listeners.erase(fd);
-		return;
-	}
-	auto ec = std::make_error_code(std::errc(errno));
-	if (done) {
+		err.reset();
+	} else {
+		auto ec = std::make_error_code(std::errc(errno));
 		err->code(ec);
 		err->message("Failed to remove flow");
+	}
+	if (done) {
 		done(err);
 	}
 }
