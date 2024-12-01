@@ -52,6 +52,8 @@ public:
 	/// if error happens (closing socket), `o` is untouched
 	std::error_code Attach(Socket &o);
 
+	int socket_fd() const;
+
 	/// create new socket no matter of if this `Socket` is created or not
 	std::error_code create(int domain, int type, int protocol);
 

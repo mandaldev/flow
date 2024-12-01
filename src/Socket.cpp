@@ -53,6 +53,11 @@ std::error_code Socket::Attach(Socket &o)
 	return {};
 }
 
+int Socket::socket_fd() const
+{
+	return _fd;
+}
+
 std::error_code Socket::create(int domain, int type, int protocol)
 {
 	_fd = socket(domain, type, protocol);
