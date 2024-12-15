@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "AsyncSocket.hpp"
+#include "Error.hpp"
 #include <Com/log.hpp>
 
 namespace Flow {
@@ -43,12 +44,17 @@ std::error_code AsyncSocket::listen(int backlog)
 	};
 	action.on_error = [this](std::shared_ptr<Error> err)
 	{
+		if (!err || err->type() == ErrType::NoError) {
+			return;
+		}
+		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
 	};
 	_flower.add_flow(socket_fd(), action, [this](std::shared_ptr<Error> err)
 	{
-		if (err && err->type() != ErrType::NoError) {
-			LOG_INFO << err->message();
+		if (!err || err->type() == ErrType::NoError) {
+			return;
 		}
+		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
 	});
 	return {};
 }
