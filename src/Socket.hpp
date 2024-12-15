@@ -31,7 +31,7 @@ std::error_code get_error(int e = errno);
 
 /// socket interface - wrapper of system socket api
 class Socket
-: Com::Unique
+: public virtual Com::Unique
 {
 public:
 	Socket() = default;
