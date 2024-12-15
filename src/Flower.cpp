@@ -153,6 +153,14 @@ bool Flower::has_flow(int fd)
 	return _listeners.count(fd);
 }
 
+void Flower::post_task(std::function<void()> task)
+{
+	std::lock_guard<std::mutex> locker(_mtx);
+	_calls.push_back([=](){
+		do_post_task(task);
+	});
+}
+
 void Flower::do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done)
 {
 	auto err = std::make_shared<AddFlowFailedError>();
@@ -219,6 +227,13 @@ void Flower::do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> 
 	}
 	if (done) {
 		done(err);
+	}
+}
+
+void Flower::do_post_task(std::function<void()> task)
+{
+	if (task) {
+		task();
 	}
 }
 

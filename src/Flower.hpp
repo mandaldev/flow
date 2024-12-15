@@ -60,10 +60,14 @@ public:
 
 	bool has_flow(int fd);
 
+	void post_task(std::function<void()> task);
+
 private:
 	void do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done);
 
 	void do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done);
+
+	void do_post_task(std::function<void()> task);
 
 	void do_calls();
 
