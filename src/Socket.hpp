@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _FLOW_SRC_SOCKET_HPP_
 #define _FLOW_SRC_SOCKET_HPP_
-#include <memory>
 #include <string>
 #include <system_error>
 #include <string_view>
