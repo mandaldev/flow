@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Socket.hpp"
 #include <cstring>
+#include <Com/log.hpp>
 
 extern "C" {
 #include <unistd.h>
@@ -37,7 +38,10 @@ Socket::Socket(Socket && o)
 Socket::~Socket()
 {
 	if (is_created()) {
-		close();
+		auto ec = Socket::close();
+		if (ec) {
+			LOG_ERROR << "failed to close socket[" << _fd << "]: " << ec.message();
+		}
 	}
 }
 

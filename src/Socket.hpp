@@ -57,6 +57,7 @@ public:
 	/// create new socket no matter of if this `Socket` is created or not
 	std::error_code create(int domain, int type, int protocol);
 
+	/// always use this api to close a socket, although the destructor will make sure of it
 	virtual std::error_code close();
 
 	std::error_code bind(sockaddr const &addr, socklen_t addr_len) const;
