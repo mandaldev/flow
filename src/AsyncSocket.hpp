@@ -22,6 +22,7 @@ namespace Flow {
 
 class AsyncSocket
 : public virtual Socket
+, public virtual std::enable_shared_from_this<AsyncSocket>
 {
 public:
 	AsyncSocket(Flower &flower);
@@ -58,11 +59,10 @@ protected:
 
 	virtual void on_error(std::shared_ptr<Error> err) = 0;
 
-private:
-	void do_accept();
+	Flower &_flower;
 
 private:
-	Flower &_flower;
+	void do_accept();
 
 	// bool _listening = false;
 	bool _connecting = false;

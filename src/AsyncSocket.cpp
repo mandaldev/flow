@@ -38,23 +38,30 @@ std::error_code AsyncSocket::listen(int backlog)
 
 	// _listening = true;
 	Flower::Action action;
-	action.on_read = [this]()
+	auto weak_this = weak_from_this();
+	action.on_read = [weak_this]()
 	{
-		do_accept();
+		if (auto ptr = weak_this.lock()) {
+			ptr->do_accept();
+		}
 	};
-	action.on_error = [this](std::shared_ptr<Error> err)
+	action.on_error = [weak_this](std::shared_ptr<Error> err)
 	{
 		if (!err || err->type() == ErrType::NoError) {
 			return;
 		}
-		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
+		if (auto ptr = weak_this.lock()) {
+			LOG_ERROR << "socket[" << ptr->socket_fd() << "]: " << err->message();
+		}
 	};
-	_flower.add_flow(socket_fd(), action, [this](std::shared_ptr<Error> err)
+	_flower.add_flow(socket_fd(), action, [weak_this](std::shared_ptr<Error> err)
 	{
 		if (!err || err->type() == ErrType::NoError) {
 			return;
 		}
-		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
+		if (auto ptr = weak_this.lock()) {
+			LOG_ERROR << "socket[" << ptr->socket_fd() << "]: " << err->message();
+		}
 	});
 	return {};
 }
@@ -77,12 +84,17 @@ std::error_code AsyncSocket::close()
 	if (!is_created()) {
 		return {};
 	}
-	_flower.remove_flow(socket_fd(), [this](std::shared_ptr<Error> err) {
-		auto ec = Socket::close();
+	auto weak_this = weak_from_this();
+	_flower.remove_flow(socket_fd(), [weak_this](std::shared_ptr<Error> err) {
+		auto ptr = weak_this.lock();
+		if (!ptr) {
+			return;
+		}
+		auto ec = ptr->Socket::close();
 		if (ec) {
 			// TODO
 		}
-		on_close();
+		ptr->on_close();
 	});
 	return {};
 }
@@ -90,22 +102,31 @@ std::error_code AsyncSocket::close()
 void AsyncSocket::setup_client_flow()
 {
 	Flower::Action action;
-	action.on_read = [this]() {
-		on_read();
-	};
-	action.on_write = [this]() {
-		if (_connecting) {
-			// TODO
-			on_connect();
+	auto weak_this = weak_from_this();
+	action.on_read = [weak_this]() {
+		if (auto ptr = weak_this.lock()) {
+			ptr->on_read();
 		}
-		on_write();
 	};
-	action.on_peer_close = [this](bool only_read) {
-		on_peer_close(only_read);
+	action.on_write = [weak_this]() {
+		if (auto ptr = weak_this.lock()) {
+			if (ptr->_connecting) {
+				// TODO
+				ptr->on_connect();
+			}
+			ptr->on_write();
+		}
 	};
-	action.on_error = [this](std::shared_ptr<Flow::Error> err)
+	action.on_peer_close = [weak_this](bool only_read) {
+		if (auto ptr = weak_this.lock()) {
+			ptr->on_peer_close(only_read);
+		}
+	};
+	action.on_error = [weak_this](std::shared_ptr<Flow::Error> err)
 	{
-		on_error(err);
+		if (auto ptr = weak_this.lock()) {
+			ptr->on_error(err);
+		}
 	};
 	_flower.add_flow(socket_fd(), action, action.on_error);
 }
