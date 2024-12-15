@@ -41,7 +41,7 @@ public:
 	/// and client socket is closed
 	std::variant<std::error_code, IPv4Socket> accept(IPv4Addr &addr, int flags) const;
 
-	std::error_code connect(IPv4Addr const &addr);
+	std::error_code connect_ipv4(IPv4Addr const &addr);
 
 	std::error_code get_name(IPv4Addr &addr) const;
 
