@@ -16,6 +16,7 @@
 #ifndef _FLOW_SRC_IPV4SOCKET_HPP_
 #define _FLOW_SRC_IPV4SOCKET_HPP_
 #include "Socket.hpp"
+#include <cstdint>
 
 namespace Flow {
 
