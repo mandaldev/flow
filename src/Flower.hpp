@@ -19,12 +19,9 @@
 #include <mutex>
 #include <shared_mutex>
 #include <atomic>
-#include <system_error>
 #include <functional>
-#include <future>
 #include <map>
 #include <vector>
-#include <thread>
 #include <memory>
 #include "Error.hpp"
 
