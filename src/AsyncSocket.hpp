@@ -37,6 +37,7 @@ public:
 	/// once connected, this socket is added to Flower
 	std::error_code connect(sockaddr const &addr, socklen_t addr_len) override;
 
+	/// async operation, on_close will be called
 	std::error_code close() override;
 
 	/// when this is a client socket (from on_accept), call this to add to Flower
