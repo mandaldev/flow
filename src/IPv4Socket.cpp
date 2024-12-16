@@ -47,6 +47,8 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	}
 }
 
+const int IPv4Socket::domain = AF_INET;
+
 IPv4Socket::IPv4Socket(Socket &&o)
 : Socket(std::move(o))
 {

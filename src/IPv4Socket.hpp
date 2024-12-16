@@ -30,6 +30,9 @@ class IPv4Socket
 : public virtual Socket
 {
 public:
+	/// AF_INET, for IPv4 domain
+	static const int domain;
+
 	IPv4Socket() = default;
 
 	IPv4Socket(Socket &&o);
