@@ -125,6 +125,7 @@ std::error_code Socket::read(std::string &buf, size_t count) const
 		buf.resize(n);
 		return {};
 	}
+	buf.clear();
 	return get_error();
 }
 
