@@ -15,6 +15,7 @@
         "src/Error.cpp"
         "src/Socket.cpp"
         "src/StreamSocket.cpp"
+        "src/TCPSocket.cpp"
       ]
 
       dep [
