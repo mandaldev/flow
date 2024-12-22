@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _FLOW_SRC_SOCKET_HPP_
 #define _FLOW_SRC_SOCKET_HPP_
+#include <cstdint>
 #include <string>
 #include <system_error>
 #include <string_view>
@@ -28,6 +29,12 @@ extern "C" {
 namespace Flow {
 
 std::error_code get_error(int e = errno);
+
+struct IPv4Addr
+{
+	std::string ip;
+	uint16_t port = 0;
+};
 
 /// socket interface - wrapper of system socket api
 class Socket
@@ -89,6 +96,20 @@ public:
 	std::error_code get_name(sockaddr &addr, socklen_t &addr_len) const;
 
 	std::error_code get_peer_name(sockaddr &addr, socklen_t &addr_len) const;
+
+	std::error_code bind(IPv4Addr const &addr) const;
+
+	/// ipv4 socket accept.
+	/// if accept succeed but address converting fails, error is returned
+	/// and client socket is closed
+	std::variant<std::error_code, Socket> accept(IPv4Addr &addr, int flags) const;
+
+	std::error_code connect_ipv4(IPv4Addr const &addr);
+
+	std::error_code get_name(IPv4Addr &addr) const;
+
+	std::error_code get_peer_name(IPv4Addr &addr) const;
+
 
 private:
 	int _fd = -1;
