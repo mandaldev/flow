@@ -112,6 +112,7 @@ void AsyncSocket::setup_client_flow()
 		if (auto ptr = weak_this.lock()) {
 			if (ptr->_connecting) {
 				// TODO
+				ptr->_connecting = false;
 				ptr->on_connect();
 			}
 			ptr->on_write();

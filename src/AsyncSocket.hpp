@@ -45,6 +45,7 @@ public:
 
 protected:
 	/// new client arriving
+	/// `sock` is not added to flower yet
 	virtual void on_accept(Socket sock) = 0;
 
 	/// connection established
