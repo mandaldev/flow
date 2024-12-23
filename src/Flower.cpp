@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Flower.hpp"
+#include <cerrno>
 #include <chrono>
 #include <thread>
 
@@ -26,6 +27,8 @@ using namespace std::chrono_literals;
 
 namespace Flow {
 
+const auto MAX_TIMEOUT = 10ms;
+
 std::shared_ptr<Error> Flower::run()
 {
 	_epoll = epoll_create1(EPOLL_CLOEXEC);
@@ -37,12 +40,11 @@ std::shared_ptr<Error> Flower::run()
 		return err;
 	}
 
-	auto timeout = 1ms;
+	std::shared_ptr<Error> ret;
+	auto timeout = 0ms;
 	while (_run) {
 		do_calls();
 
-		// 4ms at most
-		timeout = std::min(timeout, 3ms);
 		std::vector<epoll_event> events;
 		{
 			std::shared_lock<std::shared_mutex> locker(_mtx_listeners);
@@ -51,10 +53,12 @@ std::shared_ptr<Error> Flower::run()
 		if (events.empty()) {
 			// sleep a while
 			timeout++;
+			timeout = std::min(timeout, MAX_TIMEOUT);
 			std::this_thread::sleep_for(timeout);
 			continue;
 		}
 
+		timeout = std::min(timeout, MAX_TIMEOUT);
 		auto n = epoll_wait(_epoll, events.data(), events.size(), timeout.count());
 		if (n == 0) {
 			// timeout
@@ -64,7 +68,14 @@ std::shared_ptr<Error> Flower::run()
 
 		if (n < 0) {
 			// TODO
-			break;
+			auto ec = std::make_error_code(std::errc(errno));
+			if (ec.value() != EINTR) {
+				auto err = std::make_shared<FlowerPolllEventError>();
+				err->code(ec);
+				err->message("epoll_wait returns -1");
+				ret = err;
+				break;
+			}
 		}
 
 		auto last_has_events = false;
@@ -107,7 +118,6 @@ std::shared_ptr<Error> Flower::run()
 		}
 	}
 
-	std::shared_ptr<Error> ret;
 	if (-1 == ::close(_epoll)) {
 		auto ec = std::make_error_code(std::errc(errno));
 		auto err = std::make_shared<ShutdownFlowerFailedError>();
