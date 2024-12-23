@@ -239,8 +239,12 @@ void Flower::do_post_task(std::function<void()> task)
 
 void Flower::do_calls()
 {
-	std::lock_guard<std::mutex> locker(_mtx);
-	for (auto &call : _calls) {
+	std::vector<std::function<void()>> calls;
+	{
+		std::lock_guard<std::mutex> locker(_mtx);
+		calls = std::move(_calls);
+	}
+	for (auto &call : calls) {
 		if (!call) {
 			continue;
 		}
