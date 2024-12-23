@@ -53,6 +53,11 @@ ErrType ShutdownFlowerFailedError::type() const
 	return ErrType::ShutdownFlowerFailed;
 }
 
+ErrType FlowerPolllEventError::type() const
+{
+	return ErrType::FlowerPollEvent;
+}
+
 void FlowError::flow(int fd)
 {
 	_fd = fd;

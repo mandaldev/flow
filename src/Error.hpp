@@ -28,6 +28,8 @@ enum class ErrType
 	SetupFlowerFailed,
 	/// error occured while shutdonw flower
 	ShutdownFlowerFailed,
+	/// error occured while polling events
+	FlowerPollEvent,
 	/// failed to add a flow (fd) to event loop
 	AddFlowFailed,
 	RemoveFlowFailed,
@@ -70,6 +72,13 @@ public:
 };
 
 class ShutdownFlowerFailedError
+: public SystemError
+{
+public:
+	ErrType type() const override;
+};
+
+class FlowerPolllEventError
 : public SystemError
 {
 public:
