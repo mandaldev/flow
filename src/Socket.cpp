@@ -46,9 +46,9 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	out.sin_port = htons(in.port);
 	switch (inet_pton(AF_INET, in.ip.c_str(), &out.sin_addr)) {
 	case 0:
-		return {};
-	case 1:
 		return std::make_error_code(std::errc::invalid_argument);
+	case 1:
+		return {};
 	default:
 		return get_error();
 	}
