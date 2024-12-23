@@ -28,9 +28,9 @@ StreamSocket::StreamSocket(Flower &flower)
 {
 }
 
-std::error_code StreamSocket::create(int domain, int protocol)
+std::error_code StreamSocket::create_stream_socket(int domain, int protocol)
 {
-	return AsyncSocket::create(domain, SOCK_STREAM, protocol);
+	return create_async_socket(domain, SOCK_STREAM, protocol);
 }
 
 void StreamSocket::send_bytes(std::string_view bytes)

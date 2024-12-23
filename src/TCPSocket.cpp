@@ -23,9 +23,9 @@ TCPSocket::TCPSocket(Flower &flower)
 {
 }
 
-std::error_code TCPSocket::create()
+std::error_code TCPSocket::create_tcp_socket()
 {
-	return StreamSocket::create(AF_INET, 0);
+	return create_stream_socket(AF_INET, 0);
 }
 
 std::error_code TCPSocket::listen_on(IPv4Addr const &addr, int backlog)

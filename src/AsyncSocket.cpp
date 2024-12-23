@@ -24,9 +24,9 @@ AsyncSocket::AsyncSocket(Flower &flower)
 {
 }
 
-std::error_code AsyncSocket::create(int domain, int type, int protocol)
+std::error_code AsyncSocket::create_async_socket(int domain, int type, int protocol)
 {
-	return Socket::create(domain, type | SOCK_NONBLOCK | SOCK_CLOEXEC, protocol);
+	return create(domain, type | SOCK_NONBLOCK | SOCK_CLOEXEC, protocol);
 }
 
 std::error_code AsyncSocket::listen(int backlog)

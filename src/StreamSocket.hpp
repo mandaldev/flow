@@ -30,7 +30,7 @@ public:
 	StreamSocket(Flower &flower);
 
 	/// crete async stream socket
-	std::error_code create(int domain, int protocol = 0);
+	std::error_code create_stream_socket(int domain, int protocol = 0);
 
 	void send_bytes(std::string_view bytes);
 

@@ -20,13 +20,13 @@
 namespace Flow {
 
 class TCPSocket
-: public virtual StreamSocket
+: public StreamSocket
 {
 public:
 	TCPSocket(Flower &flower);
 
 	/// create tcp socket
-	std::error_code create();
+	std::error_code create_tcp_socket();
 
 	/// setup server socket
 	std::error_code listen_on(IPv4Addr const &addr, int backlog);

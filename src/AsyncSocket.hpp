@@ -21,14 +21,14 @@
 namespace Flow {
 
 class AsyncSocket
-: public virtual Socket
-, public virtual std::enable_shared_from_this<AsyncSocket>
+: public Socket
+, public std::enable_shared_from_this<AsyncSocket>
 {
 public:
 	AsyncSocket(Flower &flower);
 
 	/// crete async socket
-	std::error_code create(int domain, int type, int protocol);
+	std::error_code create_async_socket(int domain, int type, int protocol);
 
 	/// server socket api, on_accept is called when new client arriving
 	std::error_code listen(int backlog) override;
@@ -46,10 +46,10 @@ public:
 protected:
 	/// new client arriving
 	/// `sock` is not added to flower yet
-	virtual void on_accept(Socket sock) = 0;
+	virtual void on_accept(Socket sock) {}
 
 	/// connection established
-	virtual void on_connect() = 0;
+	virtual void on_connect() {}
 
 	virtual void on_write() = 0;
 
