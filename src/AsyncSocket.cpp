@@ -15,7 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "AsyncSocket.hpp"
 #include "Error.hpp"
+#include "Socket.hpp"
 #include <Com/log.hpp>
+#include <cerrno>
+#include <functional>
+#include <memory>
+#include <utility>
 
 namespace Flow {
 
@@ -38,31 +43,26 @@ std::error_code AsyncSocket::listen(int backlog)
 
 	// _listening = true;
 	Flower::Action action;
-	auto weak_this = weak_from_this();
-	action.on_read = [weak_this]()
-	{
-		if (auto ptr = weak_this.lock()) {
-			ptr->do_accept();
-		}
-	};
-	action.on_error = [weak_this](std::shared_ptr<Error> err)
+	action.on_error = bind_weak([this](std::shared_ptr<Error> err)
 	{
 		if (!err || err->type() == ErrType::NoError) {
 			return;
 		}
-		if (auto ptr = weak_this.lock()) {
-			LOG_ERROR << "socket[" << ptr->socket_fd() << "]: " << err->message();
-		}
-	};
-	_flower.add_flow(socket_fd(), action, [weak_this](std::shared_ptr<Error> err)
-	{
-		if (!err || err->type() == ErrType::NoError) {
-			return;
-		}
-		if (auto ptr = weak_this.lock()) {
-			LOG_ERROR << "socket[" << ptr->socket_fd() << "]: " << err->message();
-		}
+		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
 	});
+
+	action.on_read = bind_weak([this]()
+	{
+		do_accept();
+	});
+
+	_flower.add_flow(socket_fd(), action, bind_weak([this](std::shared_ptr<Error> err)
+	{
+		if (!err || err->type() == ErrType::NoError) {
+			return;
+		}
+		LOG_ERROR << "socket[" << socket_fd() << "]: " << err->message();
+	}));
 	return {};
 }
 
@@ -84,52 +84,53 @@ std::error_code AsyncSocket::close()
 	if (!is_created()) {
 		return {};
 	}
-	auto weak_this = weak_from_this();
-	_flower.remove_flow(socket_fd(), [weak_this](std::shared_ptr<Error> err) {
-		auto ptr = weak_this.lock();
-		if (!ptr) {
-			return;
-		}
-		auto ec = ptr->Socket::close();
+	_flower.remove_flow(socket_fd(), bind_weak([this](std::shared_ptr<Error> err) {
+		auto ec = Socket::close();
 		if (ec) {
 			// TODO
 		}
-		ptr->on_close();
-	});
+		on_close();
+	}));
 	return {};
 }
 
 void AsyncSocket::setup_client_flow()
 {
 	Flower::Action action;
-	auto weak_this = weak_from_this();
-	action.on_read = [weak_this]() {
-		if (auto ptr = weak_this.lock()) {
-			ptr->on_read();
-		}
-	};
-	action.on_write = [weak_this]() {
-		if (auto ptr = weak_this.lock()) {
-			if (ptr->_connecting) {
-				// TODO
-				ptr->_connecting = false;
-				ptr->on_connect();
-			}
-			ptr->on_write();
-		}
-	};
-	action.on_peer_close = [weak_this](bool only_read) {
-		if (auto ptr = weak_this.lock()) {
-			ptr->on_peer_close(only_read);
-		}
-	};
-	action.on_error = [weak_this](std::shared_ptr<Flow::Error> err)
+	action.on_error = bind_weak([this](std::shared_ptr<Flow::Error> err)
 	{
-		if (auto ptr = weak_this.lock()) {
-			ptr->on_error(err);
+		if (!err || err->type() == ErrType::NoError) {
+			return;
 		}
-	};
-	_flower.add_flow(socket_fd(), action, action.on_error);
+		if (err->type() == ErrType::FlowEvent) {
+			auto [ec, socket_ec] = get_error();
+			switch (socket_ec.value()) {
+			// case ECONNABORTED:
+			case ECONNREFUSED:
+			// case ECONNRESET:
+			 	if (_connecting) {
+					_connecting = false;
+					on_connect(socket_ec);
+					return;
+				}
+				break;
+			}
+		}
+		on_error(err);
+	});
+	action.on_read = bind_weak([this]() {
+		on_read();
+	});
+	action.on_write = bind_weak([this]() {
+		on_write();
+	});
+	action.on_peer_close = bind_weak([this](bool only_read) {
+		on_peer_close(only_read);
+	});
+	_flower.add_flow(socket_fd(), action, bind_weak([this](std::shared_ptr<Flow::Error> err)
+	{
+		on_flowing(err);
+	}));
 }
 
 void AsyncSocket::do_accept()

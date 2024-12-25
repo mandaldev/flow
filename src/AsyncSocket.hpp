@@ -17,12 +17,13 @@
 #define _FLOW_SRC_ASYNCSOCKET_HPP_
 #include "Socket.hpp"
 #include "Flower.hpp"
+#include <Com/memory.hpp>
 
 namespace Flow {
 
 class AsyncSocket
 : public Socket
-, public std::enable_shared_from_this<AsyncSocket>
+, public Com::EnableBindWeak<AsyncSocket>
 {
 public:
 	AsyncSocket(Flower &flower);
@@ -37,7 +38,6 @@ public:
 	/// once connected, this socket is added to Flower
 	std::error_code connect(sockaddr const &addr, socklen_t addr_len) override;
 
-	/// async operation, on_close will be called
 	std::error_code close() override;
 
 	/// when this is a client socket (from on_accept), call this to add to Flower
@@ -48,18 +48,21 @@ protected:
 	/// `sock` is not added to flower yet
 	virtual void on_accept(Socket sock) {}
 
-	/// connection established
-	virtual void on_connect() {}
+	/// connection established if no error
+	virtual void on_connect(std::error_code ec) {}
 
 	virtual void on_write() = 0;
 
 	virtual void on_read() = 0;
 
-	virtual void on_peer_close(bool only_read) = 0;
+	virtual void on_peer_close(bool only_read) {}
 
 	virtual void on_close() = 0;
 
 	virtual void on_error(std::shared_ptr<Error> err) = 0;
+
+	/// flow-add result event, if no error then flow added succeed
+	virtual void on_flowing(std::shared_ptr<Flow::Error> err) = 0;
 
 	Flower &_flower;
 
