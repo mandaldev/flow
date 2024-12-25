@@ -19,6 +19,7 @@
 #include <string>
 #include <system_error>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <Com/raii.hpp>
 
@@ -28,7 +29,7 @@ extern "C" {
 
 namespace Flow {
 
-std::error_code get_error(int e = errno);
+std::error_code get_error_code(int e = errno);
 
 struct IPv4Addr
 {
@@ -110,10 +111,45 @@ public:
 
 	std::error_code get_peer_name(IPv4Addr &addr) const;
 
+	std::error_code get_option(int level, int name, void *value, socklen_t &value_size);
+
+	std::error_code set_option(int level, int name, void const *value, socklen_t value_size);
+
+	template <typename T>
+	std::error_code get_option(int level, int name, T &value);
+
+	template <typename T>
+	std::error_code set_option(int level, int name, T const &value);
+
+	/// get socket error (use `get_option`)
+	/// since `get_option` can cause error itself, this api return two error code,
+	/// one for `get_option`, second for socket error
+	std::pair<std::error_code, std::error_code> get_error();
 
 private:
 	int _fd = -1;
 };
+
+template <typename T>
+std::error_code Socket::get_option(int level, int name, T &value)
+{
+	socklen_t size = sizeof(value);
+	auto ec = get_option(level, name, &value, size);
+	if (ec) {
+		return ec;
+	}
+	if (size != sizeof(value)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	return {};
+}
+
+template <typename T>
+std::error_code Socket::set_option(int level, int name, T const &value)
+{
+	socklen_t size = sizeof(value);
+	return set_option(level, name, &value, size);
+}
 
 }
 #endif

@@ -16,6 +16,7 @@
 #include "Socket.hpp"
 #include <cstring>
 #include <Com/log.hpp>
+#include <sys/socket.h>
 
 extern "C" {
 #include <unistd.h>
@@ -24,7 +25,7 @@ extern "C" {
 
 namespace Flow {
 
-std::error_code get_error(int e)
+std::error_code get_error_code(int e)
 {
 	return std::make_error_code(std::errc(e));
 }
@@ -33,7 +34,7 @@ static std::error_code convert_addr(sockaddr_in &in, IPv4Addr &out)
 {
 	char buf[INET_ADDRSTRLEN] = "";
 	if (!inet_ntop(in.sin_family, &in.sin_addr, buf, INET_ADDRSTRLEN)) {
-		return get_error();
+		return get_error_code();
 	}
 	out.ip = buf;
 	out.port = ntohs(in.sin_port);
@@ -50,7 +51,7 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	case 1:
 		return {};
 	default:
-		return get_error();
+		return get_error_code();
 	}
 }
 
@@ -90,7 +91,7 @@ int Socket::socket_fd() const
 std::error_code Socket::create(int domain, int type, int protocol)
 {
 	_fd = socket(domain, type, protocol);
-	return get_error(_fd >= 0 ? 0 : errno);
+	return get_error_code(_fd >= 0 ? 0 : errno);
 }
 
 std::error_code Socket::close()
@@ -99,17 +100,17 @@ std::error_code Socket::close()
 		_fd = -1;
 		return {};
 	}
-	return get_error();
+	return get_error_code();
 }
 
 std::error_code Socket::bind(sockaddr const &addr, socklen_t addr_len) const
 {
-	return get_error(::bind(_fd, &addr, addr_len) == 0 ? 0 : errno);
+	return get_error_code(::bind(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }
 
 std::error_code Socket::listen(int backlog)
 {
-	return get_error(::listen(_fd, backlog) == 0 ? 0 : errno);
+	return get_error_code(::listen(_fd, backlog) == 0 ? 0 : errno);
 }
 
 std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &addr_len, int flags) const
@@ -119,7 +120,7 @@ std::variant<std::error_code, Socket> Socket::accept(sockaddr &addr, socklen_t &
 	if (s.is_created()) {
 		return s;
 	}
-	return get_error();
+	return get_error_code();
 }
 
 std::variant<std::error_code, Socket> Socket::accept(int flags) const
@@ -129,12 +130,12 @@ std::variant<std::error_code, Socket> Socket::accept(int flags) const
 	if (s.is_created()) {
 		return s;
 	}
-	return get_error();
+	return get_error_code();
 }
 
 std::error_code Socket::connect(sockaddr const &addr, socklen_t addr_len)
 {
-	return get_error(::connect(_fd, &addr, addr_len) == 0 ? 0 : errno);
+	return get_error_code(::connect(_fd, &addr, addr_len) == 0 ? 0 : errno);
 }
 
 bool Socket::is_created() const
@@ -151,7 +152,7 @@ std::error_code Socket::read(std::string &buf, size_t count) const
 		return {};
 	}
 	buf.clear();
-	return get_error();
+	return get_error_code();
 }
 
 std::error_code Socket::write(std::string_view const &bytes, size_t &writen_count) const
@@ -162,21 +163,21 @@ std::error_code Socket::write(std::string_view const &bytes, size_t &writen_coun
 		writen_count = n;
 		return {};
 	}
-	return get_error();
+	return get_error_code();
 }
 
 std::error_code Socket::get_name(sockaddr &addr, socklen_t &addr_len) const
 {
-	if (0 == getsockname(_fd, &addr, &addr_len)) {
-		return get_error();
+	if (0 != getsockname(_fd, &addr, &addr_len)) {
+		return get_error_code();
 	}
 	return {};
 }
 
 std::error_code Socket::get_peer_name(sockaddr &addr, socklen_t &addr_len) const
 {
-	if (0 == getpeername(_fd, &addr, &addr_len)) {
-		return get_error();
+	if (0 != getpeername(_fd, &addr, &addr_len)) {
+		return get_error_code();
 	}
 	return {};
 }
@@ -243,6 +244,29 @@ std::error_code Socket::get_peer_name(IPv4Addr &addr) const
 		return std::make_error_code(std::errc::invalid_argument);
 	}
 	return convert_addr(in, addr);
+}
+
+std::error_code Socket::get_option(int level, int name, void *value, socklen_t &value_size)
+{
+	if (0 != getsockopt(_fd, level, name, value, &value_size)) {
+		return get_error_code();
+	}
+	return {};
+}
+
+std::error_code Socket::set_option(int level, int name, void const *value, socklen_t value_size)
+{
+	if (0 != setsockopt(_fd, level, name, value, value_size)) {
+		return get_error_code();
+	}
+	return {};
+}
+
+std::pair<std::error_code, std::error_code> Socket::get_error()
+{
+	int err = 0;
+	auto ec = get_option(SOL_SOCKET, SO_ERROR, err);
+	return {ec, get_error_code(err)};
 }
 
 }
