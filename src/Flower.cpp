@@ -29,14 +29,25 @@ namespace Flow {
 
 const auto MAX_TIMEOUT = 10ms;
 
+thread_local Flower const *Flower::_bound_flower = nullptr;
+
 std::shared_ptr<Error> Flower::run()
 {
+	if (_bound_flower) {
+		auto ec = std::make_error_code(std::errc::operation_not_supported);
+		auto err = std::make_shared<SetupFlowerFailedError>();
+		err->code(ec);
+		err->message("current thread is used by another flower");
+		return err;
+	}
+	_bound_flower = this;
 	_epoll = epoll_create1(EPOLL_CLOEXEC);
 	if (_epoll == -1) {
 		auto ec = std::make_error_code(std::errc(errno));
 		auto err = std::make_shared<SetupFlowerFailedError>();
 		err->code(ec);
 		err->message("Failed to create epoll");
+		_bound_flower = nullptr;
 		return err;
 	}
 
@@ -54,6 +65,7 @@ std::shared_ptr<Error> Flower::run()
 			// sleep a while
 			timeout++;
 			timeout = std::min(timeout, MAX_TIMEOUT);
+			// TODO what if calls added
 			std::this_thread::sleep_for(timeout);
 			continue;
 		}
@@ -128,6 +140,7 @@ std::shared_ptr<Error> Flower::run()
 
 	_epoll = -1;
 
+	_bound_flower = nullptr;
 	return ret;
 }
 
@@ -143,17 +156,25 @@ bool Flower::is_runing()
 
 void Flower::add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done)
 {
+	if (is_flow_thread()) {
+		do_add_flow(fd, action, std::move(done));
+		return;
+	}
 	std::lock_guard<std::mutex> locker(_mtx);
 	_calls.push_back([=](){
-		do_add_flow(fd, action, done);
+		do_add_flow(fd, action, std::move(done));
 	});
 }
 
 void Flower::remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done)
 {
+	if (is_flow_thread()) {
+		do_remove_flow(fd, std::move(done));
+		return;
+	}
 	std::lock_guard<std::mutex> locker(_mtx);
 	_calls.push_back([=](){
-		do_remove_flow(fd, done);
+		do_remove_flow(fd, std::move(done));
 	});
 }
 
@@ -163,11 +184,20 @@ bool Flower::has_flow(int fd)
 	return _listeners.count(fd);
 }
 
+void Flower::add_task(std::function<void()> task)
+{
+	if (is_flow_thread()) {
+		do_post_task(std::move(task));
+		return;
+	}
+
+	post_task(std::move(task));
+}
 void Flower::post_task(std::function<void()> task)
 {
 	std::lock_guard<std::mutex> locker(_mtx);
 	_calls.push_back([=](){
-		do_post_task(task);
+		do_post_task(std::move(task));
 	});
 }
 
@@ -270,6 +300,11 @@ std::shared_ptr<Flower::Action> Flower::flow_action(int fd)
 		return it->second;
 	}
 	return {};
+}
+
+bool Flower::is_flow_thread()
+{
+	return this == _bound_flower;
 }
 
 }

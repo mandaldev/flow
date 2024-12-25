@@ -60,6 +60,9 @@ public:
 
 	bool has_flow(int fd);
 
+	/// if current is not flow thread, same as `post_task`
+	void add_task(std::function<void()> task);
+
 	void post_task(std::function<void()> task);
 
 private:
@@ -73,9 +76,13 @@ private:
 
 	std::shared_ptr<Action> flow_action(int fd);
 
+	bool is_flow_thread();
+
 	std::mutex _mtx;
 	std::vector<std::function<void()>> _calls;
 
+	/// which flower is runing on 'current' thred
+	static thread_local Flower const *_bound_flower;
 	std::atomic_bool _run;
 	std::atomic_int _epoll = -1;
 
