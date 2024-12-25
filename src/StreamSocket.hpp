@@ -36,7 +36,7 @@ public:
 
 protected:
 	/// override this to receive data
-	virtual void on_receive_bytes(std::string_view bytes) = 0;
+	virtual void on_receive_bytes(std::string_view bytes) {}
 
 	void on_write() override;
 
