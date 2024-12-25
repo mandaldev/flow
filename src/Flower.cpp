@@ -98,28 +98,42 @@ std::shared_ptr<Error> Flower::run()
 				// TODO
 				continue;
 			}
-			if ((e.events & EPOLLIN) && action->on_read) {
-				action->on_read();
+			if (e.events & EPOLLERR) {
+				auto action = flow_action(e.data.fd);
+				if (action && action->on_error) {
+					auto err = std::make_shared<FlowEventError>();
+					err->flow(e.data.fd);
+					err->message("flow error event occured");
+					action->on_error(err);
+				}
 				last_has_events = true;
 			}
-			if ((e.events & EPOLLOUT) && action->on_write) {
-				action->on_write();
+			if (e.events & EPOLLRDHUP) {
+				auto action = flow_action(e.data.fd);
+				if (action && action->on_peer_close) {
+					action->on_peer_close(true);
+				}
 				last_has_events = true;
 			}
-			if ((e.events & EPOLLRDHUP) && action->on_peer_close) {
-				action->on_peer_close(true);
+			if (e.events & EPOLLHUP) {
+				auto action = flow_action(e.data.fd);
+				if (action && action->on_peer_close) {
+					action->on_peer_close(false);
+				}
 				last_has_events = true;
 			}
-			if ((e.events & EPOLLHUP) && action->on_peer_close) {
-				action->on_peer_close(false);
+			if (e.events & EPOLLIN) {
+				auto action = flow_action(e.data.fd);
+				if (action && action->on_read) {
+					action->on_read();
+				}
 				last_has_events = true;
 			}
-			if ((e.events & EPOLLERR) && action->on_error) {
-				auto err = std::make_shared<FlowEventError>();
-				err->flow(e.data.fd);
-				// TODO
-				// err->message("");
-				action->on_error(err);
+			if (e.events & EPOLLOUT) {
+				auto action = flow_action(e.data.fd);
+				if (action && action->on_write) {
+					action->on_write();
+				}
 				last_has_events = true;
 			}
 		}

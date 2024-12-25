@@ -33,14 +33,16 @@ class Flower
 : Com::Unique
 {
 public:
-	/// called when an event occurs
+	/// called when an event occurs.
+	/// if multiple events arrive at the same time, notifys will be called by order as
+	/// they declared.
 	struct Action {
-		std::function<void()> on_read;
-		std::function<void()> on_write;
-		/// if `only_read` is true, peer will never send data any more
-		std::function<void(bool only_read)> on_peer_close;
 		/// error notify
 		std::function<void(std::shared_ptr<Error>)> on_error;
+		/// if `only_read` is true, peer will never send data any more
+		std::function<void(bool only_read)> on_peer_close;
+		std::function<void()> on_read;
+		std::function<void()> on_write;
 	};
 
 	/// run event loop.
