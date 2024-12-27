@@ -20,6 +20,7 @@
 #include <mutex>
 #include <Com/log.hpp>
 #include <sys/socket.h>
+#include <system_error>
 
 namespace Flow {
 
@@ -78,9 +79,14 @@ void StreamSocket::on_read()
 	const size_t BUF_SIZE = 4096;
 	std::string data;
 	std::string buf;
+	std::error_code ec;
 	while (true) {
-		auto ec = read(buf, BUF_SIZE);
+		ec = read(buf, BUF_SIZE);
 		if (!ec) {
+			if (buf.empty()) {
+				// socket closed
+				break;
+			}
 			data += buf;
 			continue;
 		}
@@ -93,6 +99,8 @@ void StreamSocket::on_read()
 	}
 	if (data.size()) {
 		on_receive_bytes(data);
+	} else if (!ec) {
+		ec = close();
 	}
 }
 
