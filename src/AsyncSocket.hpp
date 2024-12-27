@@ -69,6 +69,8 @@ protected:
 private:
 	void do_accept();
 
+	void check_connect();
+
 	// bool _listening = false;
 	bool _connecting = false;
 };

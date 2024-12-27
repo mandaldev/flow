@@ -94,6 +94,15 @@ std::error_code AsyncSocket::close()
 	return {};
 }
 
+void AsyncSocket::check_connect()
+{
+	if (_connecting) {
+		auto [ec, socket_ec] = get_error();
+		_connecting = false;
+		on_connect(socket_ec);
+	}
+}
+
 void AsyncSocket::setup_client_flow()
 {
 	Flower::Action action;
@@ -119,9 +128,11 @@ void AsyncSocket::setup_client_flow()
 		on_error(err);
 	});
 	action.on_read = bind_weak([this]() {
+		check_connect();
 		on_read();
 	});
 	action.on_write = bind_weak([this]() {
+		check_connect();
 		on_write();
 	});
 	action.on_peer_close = bind_weak([this](bool only_read) {
