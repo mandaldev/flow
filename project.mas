@@ -39,5 +39,8 @@
         "Com"
       ]
     }
+
+    tcpserver "check/tcpserver.mas"
+    tcpclient "check/tcpclient.mas"
   }
 }

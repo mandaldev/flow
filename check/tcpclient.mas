@@ -1,0 +1,13 @@
+{
+  language "c++"
+  std "c++17"
+  type "exe"
+
+  src [
+    "TCPClient.cpp"
+  ]
+
+  dep [
+    "flow"
+  ]
+}
