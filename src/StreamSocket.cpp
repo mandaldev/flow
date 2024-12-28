@@ -36,16 +36,15 @@ std::error_code StreamSocket::create_stream_socket(int domain, int protocol)
 
 void StreamSocket::send_bytes(std::string_view bytes)
 {
-	auto weak_this = weak_from_this();
-	std::lock_guard<std::mutex> locker(_mtx_data);
-	_data.push_back(std::string(bytes.data(), bytes.size()));
-	// try to write
-	_flower.post_task([weak_this]()
 	{
-		if (auto ptr = std::dynamic_pointer_cast<StreamSocket>(weak_this.lock())) {
-			ptr->on_write();
-		}
-	});
+		std::lock_guard<std::mutex> locker(_mtx_data);
+		_data.push_back(std::string(bytes.data(), bytes.size()));
+	}
+	// try to write
+	_flower.add_task(bind_weak([this]()
+	{
+		on_write();
+	}));
 }
 
 void StreamSocket::on_write()
