@@ -21,7 +21,7 @@ class TCPClient
 : public Flow::TCPSocket
 {
 public:
-	TCPClient(Flow::Flower &flower);
+	TCPClient(Flow::Flower &flower, std::string_view msg);
 
 protected:
 	void on_connect(std::error_code ec) override;
@@ -35,7 +35,9 @@ protected:
 	void on_receive_bytes(std::string_view bytes) override;
 
 	void on_flowing(std::shared_ptr<Flow::Error> err) override;
+
 private:
+	std::string _msg;
 };
 
 #endif

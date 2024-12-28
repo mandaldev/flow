@@ -62,6 +62,8 @@ void TCPServerSocket::on_error(std::shared_ptr<Flow::Error> err)
 
 void TCPServerSocket::on_receive_bytes(std::string_view bytes)
 {
+	LOG_DEBUG << "message from client: " << bytes;
+	send_bytes(bytes);
 }
 
 void TCPServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
@@ -78,7 +80,6 @@ void TCPServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 		log << "{client socket is flowing}";
 	}
 }
-
 
 TCPListenSocket::TCPListenSocket(Flow::Flower &flower)
 : Flow::TCPSocket(flower)

@@ -16,8 +16,9 @@
 #include "TCPClient.hpp"
 #include <Com/log.hpp>
 
-TCPClient::TCPClient(Flow::Flower &flower)
+TCPClient::TCPClient(Flow::Flower &flower, std::string_view msg)
 : Flow::TCPSocket(flower)
+, _msg(msg)
 {
 }
 
@@ -30,6 +31,8 @@ void TCPClient::on_connect(std::error_code ec)
 		Flow::IPv4Addr addr;
 		ec = get_name(addr);
 		LOG_ERROR << "client connected at: [" << addr.ip << ":" << addr.port << "]";
+
+		send_bytes(_msg);
 	}
 }
 
@@ -53,6 +56,9 @@ void TCPClient::on_error(std::shared_ptr<Flow::Error> err)
 
 void TCPClient::on_receive_bytes(std::string_view bytes)
 {
+	LOG_DEBUG << "message from server: " << bytes;
+	auto ec = close();
+	LOG_DEBUG << "closing connection: " << ec;
 }
 
 void TCPClient::on_flowing(std::shared_ptr<Flow::Error> err)
@@ -67,7 +73,8 @@ void TCPClient::on_flowing(std::shared_ptr<Flow::Error> err)
 int main(int argc, const char *argv[])
 {
 	Flow::Flower flower;
-	auto client = std::make_shared<TCPClient>(flower);
+	std::string msg = argc > 1 ? argv[1] : "hello!";
+	auto client = std::make_shared<TCPClient>(flower, msg);
 	flower.add_task([&]()
 	{
 		auto ec = client->create_tcp_socket();
