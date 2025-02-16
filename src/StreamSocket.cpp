@@ -16,7 +16,6 @@
 #include "StreamSocket.hpp"
 #include "AsyncSocket.hpp"
 #include <cerrno>
-#include <memory>
 #include <mutex>
 #include <Com/log.hpp>
 #include <sys/socket.h>
