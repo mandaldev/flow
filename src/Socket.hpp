@@ -111,6 +111,21 @@ public:
 
 	std::error_code get_peer_name(IPv4Addr &addr) const;
 
+
+	/// local (unix) socket accept
+	/// - empty string: unamed local socket
+	/// - zero-byte leading string: abstract local socket
+	/// - other: named local socket
+	std::variant<std::error_code, Socket> accept(std::string &addr, int flags) const;
+
+	std::error_code connect_local(std::string_view addr);
+
+	std::error_code get_name(std::string &addr) const;
+
+	std::error_code get_peer_name(std::string &addr) const;
+
+	std::error_code bind(std::string_view addr) const;
+
 	std::error_code get_option(int level, int name, void *value, socklen_t &value_size);
 
 	std::error_code set_option(int level, int name, void const *value, socklen_t value_size);

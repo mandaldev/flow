@@ -14,13 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Socket.hpp"
+#include <cstddef>
 #include <cstring>
 #include <Com/log.hpp>
+#include <string_view>
 #include <sys/socket.h>
 
 extern "C" {
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/un.h>
 }
 
 namespace Flow {
@@ -30,7 +33,7 @@ std::error_code get_error_code(int e)
 	return std::make_error_code(std::errc(e));
 }
 
-static std::error_code convert_addr(sockaddr_in &in, IPv4Addr &out)
+static std::error_code convert_addr(sockaddr_in const &in, IPv4Addr &out)
 {
 	char buf[INET_ADDRSTRLEN] = "";
 	if (!inet_ntop(in.sin_family, &in.sin_addr, buf, INET_ADDRSTRLEN)) {
@@ -53,6 +56,47 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	default:
 		return get_error_code();
 	}
+}
+
+static std::error_code convert_addr(sockaddr_un &in, size_t in_size, std::string &out)
+{
+	const auto min_size = offsetof(sockaddr_un, sun_path);
+	if (in_size < min_size) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	if (in_size == min_size) {
+		// unnamed
+		out.clear();
+		return {};
+	}
+	if (in.sun_path[0] == '\0') {
+		// abstract
+		out = std::string(in.sun_path, in_size - min_size);
+		return {};
+	}
+	out = in.sun_path;
+	return {};
+}
+
+/// convert named or abstract local socket addr
+static std::error_code convert_addr(std::string_view in, sockaddr_un &out)
+{
+	const auto max_size = sizeof(out.sun_path);
+	if (in.empty() || in.size() > max_size) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	out.sun_family = AF_LOCAL;
+	if (in[0] == 0 && in.size() > 1) {
+		// abstract
+		std::memcpy(out.sun_path, in.data(), in.size());
+		return {};
+	}
+	if (in.size() == max_size) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	std::memcpy(out.sun_path, in.data(), in.size());
+	out.sun_path[in.size()] = 0;
+	return {};
 }
 
 Socket::Socket(Socket && o)
@@ -244,6 +288,70 @@ std::error_code Socket::get_peer_name(IPv4Addr &addr) const
 		return std::make_error_code(std::errc::invalid_argument);
 	}
 	return convert_addr(in, addr);
+}
+
+std::variant<std::error_code, Socket> Socket::accept(std::string &addr, int flags) const
+{
+	sockaddr_un in{};
+	socklen_t len = sizeof(in);
+	auto var = Socket::accept((sockaddr&)in, len, flags);
+	if (std::holds_alternative<std::error_code>(var)) {
+		return std::get<std::error_code>(var);
+	}
+	if (len > sizeof(in)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	auto ec = convert_addr(in, len, addr);
+	if (ec) {
+		return ec;
+	}
+	return std::get<Socket>(std::move(var));
+}
+
+std::error_code Socket::connect_local(std::string_view addr)
+{
+	sockaddr_un out{};
+	if (auto ec = convert_addr(addr, out)) {
+		return ec;
+	}
+	return connect((sockaddr&)out, sizeof(out));
+}
+
+std::error_code Socket::get_name(std::string &addr) const
+{
+	sockaddr_un in{};
+	socklen_t len = sizeof(in);
+	auto ec = Socket::get_name((sockaddr&)in, len);
+	if (ec) {
+		return ec;
+	}
+	if (len != sizeof(in)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	return convert_addr(in, len, addr);
+}
+
+std::error_code Socket::get_peer_name(std::string &addr) const
+{
+	sockaddr_un in{};
+	socklen_t len = sizeof(in);
+	auto ec = Socket::get_peer_name((sockaddr&)in, len);
+	if (ec) {
+		return ec;
+	}
+	if (len != sizeof(in)) {
+		return std::make_error_code(std::errc::invalid_argument);
+	}
+	return convert_addr(in, len, addr);
+}
+
+std::error_code Socket::bind(std::string_view addr) const
+{
+	sockaddr_un out{};
+	if (auto ec = convert_addr(addr, out)) {
+		return ec;
+	}
+	return Socket::bind((sockaddr&)out, sizeof(out));
 }
 
 std::error_code Socket::get_option(int level, int name, void *value, socklen_t &value_size)
