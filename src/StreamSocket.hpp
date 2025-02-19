@@ -34,6 +34,18 @@ public:
 
 	void send_bytes(std::string_view bytes);
 
+	/// create tcp socket
+	std::error_code create_tcp_socket();
+
+	/// setup tcp server socket
+	std::error_code listen_on(IPv4Addr const &addr, int backlog);
+
+	/// create local (unix domain) socket
+	std::error_code create_local_socket();
+
+	/// setup local server socket
+	std::error_code listen_on(std::string_view addr, int backlog);
+
 protected:
 	/// override this to receive data
 	virtual void on_receive_bytes(std::string_view bytes) {}

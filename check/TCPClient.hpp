@@ -15,10 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _FLOW_CHECK_TCPCLIENT_HPP_
 #define _FLOW_CHECK_TCPCLIENT_HPP_
-#include "../src/TCPSocket.hpp"
+#include "../src/StreamSocket.hpp"
 
 class TCPClient
-: public Flow::TCPSocket
+: public Flow::StreamSocket
 {
 public:
 	TCPClient(Flow::Flower &flower, std::string_view msg);

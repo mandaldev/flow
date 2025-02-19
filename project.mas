@@ -16,8 +16,6 @@
         "src/Socket.cpp"
         "src/AsyncSocket.cpp"
         "src/StreamSocket.cpp"
-        "src/TCPSocket.cpp"
-        "src/LocalSocket.cpp"
       ]
 
       dep [

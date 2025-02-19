@@ -46,6 +46,34 @@ void StreamSocket::send_bytes(std::string_view bytes)
 	}));
 }
 
+std::error_code StreamSocket::create_tcp_socket()
+{
+	return create_stream_socket(AF_INET, 0);
+}
+
+std::error_code StreamSocket::listen_on(IPv4Addr const &addr, int backlog)
+{
+	auto ec = bind(addr);
+	if (!ec) {
+		return listen(backlog);
+	}
+	return ec;
+}
+
+std::error_code StreamSocket::create_local_socket()
+{
+	return create_stream_socket(AF_LOCAL, 0);
+}
+
+std::error_code StreamSocket::listen_on(std::string_view addr, int backlog)
+{
+	auto ec = bind(addr);
+	if (!ec) {
+		return listen(backlog);
+	}
+	return ec;
+}
+
 void StreamSocket::on_write()
 {
 	std::lock_guard<std::mutex> locker(_mtx_data);

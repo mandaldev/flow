@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef _FLOW_CHECK_TCPSERVER_HPP_
 #define _FLOW_CHECK_TCPSERVER_HPP_
-#include "../src/TCPSocket.hpp"
+#include "../src/StreamSocket.hpp"
 #include <memory>
 #include <set>
 
 class TCPListenSocket
-: public Flow::TCPSocket
+: public Flow::StreamSocket
 {
 public:
 	TCPListenSocket(Flow::Flower &flower);

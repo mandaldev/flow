@@ -17,7 +17,7 @@
 #include <Com/log.hpp>
 
 TCPClient::TCPClient(Flow::Flower &flower, std::string_view msg)
-: Flow::TCPSocket(flower)
+: Flow::StreamSocket(flower)
 , _msg(msg)
 {
 }

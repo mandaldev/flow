@@ -18,11 +18,11 @@
 #include <memory>
 
 class TCPServerSocket
-: public Flow::TCPSocket
+: public Flow::StreamSocket
 {
 public:
 	TCPServerSocket(Flow::Flower &flower, TCPListenSocket &owner)
-	: Flow::TCPSocket(flower)
+	: Flow::StreamSocket(flower)
 	, _owner(owner)
 	{}
 
@@ -82,7 +82,7 @@ void TCPServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 }
 
 TCPListenSocket::TCPListenSocket(Flow::Flower &flower)
-: Flow::TCPSocket(flower)
+: Flow::StreamSocket(flower)
 {
 }
 
