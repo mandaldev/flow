@@ -141,8 +141,16 @@ public:
 	/// one for `get_option`, second for socket error
 	std::pair<std::error_code, std::error_code> get_error();
 
+	/// domain passed to last call to `create`
+	int domain() const;
+
+	/// type passed to last call to `create`
+	int type() const;
+
 private:
 	int _fd = -1;
+	int _domain = 0;
+	int _type = 0;
 };
 
 template <typename T>

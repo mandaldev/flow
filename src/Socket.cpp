@@ -123,7 +123,11 @@ std::error_code Socket::Attach(Socket &o)
 		}
 	}
 	_fd = o._fd;
+	_domain = o._domain;
+	_type = o._type;
 	o._fd = -1;
+	o._domain = 0;
+	o._type = 0;
 	return {};
 }
 
@@ -135,6 +139,8 @@ int Socket::socket_fd() const
 std::error_code Socket::create(int domain, int type, int protocol)
 {
 	_fd = socket(domain, type, protocol);
+	_domain = domain;
+	_type = type;
 	return get_error_code(_fd >= 0 ? 0 : errno);
 }
 
@@ -171,6 +177,8 @@ std::variant<std::error_code, Socket> Socket::accept(int flags) const
 {
 	Socket s;
 	s._fd = ::accept4(_fd, nullptr, nullptr, flags);
+	s._domain = _domain;
+	s._type = _type;
 	if (s.is_created()) {
 		return s;
 	}
@@ -375,6 +383,16 @@ std::pair<std::error_code, std::error_code> Socket::get_error()
 	int err = 0;
 	auto ec = get_option(SOL_SOCKET, SO_ERROR, err);
 	return {ec, get_error_code(err)};
+}
+
+int Socket::domain() const
+{
+	return _domain;
+}
+
+int Socket::type() const
+{
+	return _type;
 }
 
 }
