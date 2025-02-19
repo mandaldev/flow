@@ -58,6 +58,7 @@ int tcp_client(int argc, const char *argv[])
 		std::cin.getline(msg_buf.data(), msg_buf.size());
 		std::string msg = msg_buf.data();
 		msg += '\n';
+		[[maybe_unused]]
 		auto n = write(client_socket, msg.data(), msg.size());
 		do {
 			auto n = read(client_socket, msg_buf.data(), msg_buf.size());
