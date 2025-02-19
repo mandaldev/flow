@@ -4,7 +4,7 @@
   type "exe"
 
   src [
-    "TCPClient.cpp"
+    "StreamClient.cpp"
   ]
 
   dep [

@@ -13,15 +13,15 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_CHECK_TCPCLIENT_HPP_
-#define _FLOW_CHECK_TCPCLIENT_HPP_
+#ifndef _FLOW_CHECK_STREAMCLIENT_HPP_
+#define _FLOW_CHECK_STREAMCLIENT_HPP_
 #include "../src/StreamSocket.hpp"
 
-class TCPClient
+class StreamClient
 : public Flow::StreamSocket
 {
 public:
-	TCPClient(Flow::Flower &flower, std::string_view msg);
+	StreamClient(Flow::Flower &flower, std::string_view msg);
 
 protected:
 	void on_connect(std::error_code ec) override;

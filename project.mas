@@ -39,7 +39,7 @@
       ]
     }
 
-    tcpserver "check/tcpserver.mas"
-    tcpclient "check/tcpclient.mas"
+    streamserver "check/streamserver.mas"
+    streamclient "check/streamclient.mas"
   }
 }

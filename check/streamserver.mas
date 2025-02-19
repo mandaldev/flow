@@ -4,7 +4,7 @@
   type "exe"
 
   src [
-    "TCPServer.cpp"
+    "StreamServer.cpp"
   ]
 
   dep [
