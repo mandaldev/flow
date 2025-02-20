@@ -5,11 +5,11 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "tcpserver",
+			"name": "streamserver",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/debug/tcpserver",
-			"args": [],
+			"program": "${workspaceFolder}/build/debug/streamserver",
+			"args": ["--type=tcp"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
 			"environment": [],
@@ -30,11 +30,11 @@
 			]
 		},
 		{
-			"name": "tcpclient",
+			"name": "streamclient",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/debug/tcpclient",
-			"args": [],
+			"program": "${workspaceFolder}/build/debug/streamclient",
+			"args": ["--type=tcp"],
 			"stopAtEntry": false,
 			"cwd": "${fileDirname}",
 			"environment": [],
