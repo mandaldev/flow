@@ -100,7 +100,7 @@ std::shared_ptr<Error> Flower::run()
 				continue;
 			}
 			if (e.events & EPOLLERR) {
-				// LOG_DEBUG << "epoll event ERR of " << e.data.fd;
+				LOG_DEBUG << "epoll event ERR of " << e.data.fd;
 				auto action = flow_action(e.data.fd);
 				if (action && action->on_error) {
 					auto err = std::make_shared<FlowEventError>();
@@ -111,7 +111,7 @@ std::shared_ptr<Error> Flower::run()
 				last_has_events = true;
 			}
 			if (e.events & EPOLLRDHUP) {
-				// LOG_DEBUG << "epoll event RDHUP of " << e.data.fd;
+				LOG_DEBUG << "epoll event RDHUP of " << e.data.fd;
 				auto action = flow_action(e.data.fd);
 				if (action && action->on_peer_close) {
 					action->on_peer_close(true);
@@ -119,7 +119,7 @@ std::shared_ptr<Error> Flower::run()
 				last_has_events = true;
 			}
 			if (e.events & EPOLLHUP) {
-				// LOG_DEBUG << "epoll event HUP of " << e.data.fd;
+				LOG_DEBUG << "epoll event HUP of " << e.data.fd;
 				auto action = flow_action(e.data.fd);
 				if (action && action->on_peer_close) {
 					action->on_peer_close(false);
@@ -127,7 +127,7 @@ std::shared_ptr<Error> Flower::run()
 				last_has_events = true;
 			}
 			if (e.events & EPOLLIN) {
-				// LOG_DEBUG << "epoll event IN of " << e.data.fd;
+				LOG_DEBUG << "epoll event IN of " << e.data.fd;
 				auto action = flow_action(e.data.fd);
 				if (action && action->on_read) {
 					action->on_read();
@@ -135,7 +135,7 @@ std::shared_ptr<Error> Flower::run()
 				last_has_events = true;
 			}
 			if (e.events & EPOLLOUT) {
-				// LOG_DEBUG << "epoll event OUT of " << e.data.fd;
+				LOG_DEBUG << "epoll event OUT of " << e.data.fd;
 				auto action = flow_action(e.data.fd);
 				if (action && action->on_write) {
 					action->on_write();
