@@ -73,8 +73,8 @@ std::error_code AsyncSocket::connect(sockaddr const &addr, socklen_t addr_len)
 		if (ec.value() != EAGAIN && ec.value() != EINPROGRESS) {
 			return ec;
 		}
-		_connecting = true;
 	}
+	_connecting = true;
 	setup_client_flow();
 	return {};
 }
