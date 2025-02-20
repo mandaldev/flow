@@ -58,7 +58,7 @@ static std::error_code convert_addr(IPv4Addr const &in, sockaddr_in &out)
 	}
 }
 
-static std::error_code convert_addr(sockaddr_un &in, size_t in_size, std::string &out)
+static std::error_code convert_addr(sockaddr_un const &in, size_t in_size, std::string &out)
 {
 	const auto min_size = offsetof(sockaddr_un, sun_path);
 	if (in_size < min_size) {
@@ -301,6 +301,7 @@ std::error_code Socket::get_peer_name(IPv4Addr &addr) const
 std::variant<std::error_code, Socket> Socket::accept(std::string &addr, int flags) const
 {
 	sockaddr_un in{};
+	in.sun_family = AF_LOCAL;
 	socklen_t len = sizeof(in);
 	auto var = Socket::accept((sockaddr&)in, len, flags);
 	if (std::holds_alternative<std::error_code>(var)) {
@@ -328,6 +329,7 @@ std::error_code Socket::connect_local(std::string_view addr)
 std::error_code Socket::get_name(std::string &addr) const
 {
 	sockaddr_un in{};
+	in.sun_family = AF_LOCAL;
 	socklen_t len = sizeof(in);
 	auto ec = Socket::get_name((sockaddr&)in, len);
 	if (ec) {
@@ -342,6 +344,7 @@ std::error_code Socket::get_name(std::string &addr) const
 std::error_code Socket::get_peer_name(std::string &addr) const
 {
 	sockaddr_un in{};
+	in.sun_family = AF_LOCAL;
 	socklen_t len = sizeof(in);
 	auto ec = Socket::get_peer_name((sockaddr&)in, len);
 	if (ec) {
