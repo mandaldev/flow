@@ -101,6 +101,8 @@ static std::error_code convert_addr(std::string_view in, sockaddr_un &out)
 
 Socket::Socket(Socket && o)
 : _fd(o._fd)
+, _domain(o._domain)
+, _type(o._type)
 {
 	o._fd = -1;
 }
