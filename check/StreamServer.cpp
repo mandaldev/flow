@@ -80,24 +80,23 @@ void StreamServerSocket::on_receive_bytes(std::string_view bytes)
 
 void StreamServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 {
-	auto &&log = LOG_ERROR;
 	if (domain() == AF_INET) {
 		auto ec = get_peer_name(_tcp_peer);
 		if (ec) {
-			log << "{failed to get new client peer name: " << ec.message() << "}";
+			LOG_ERROR << "failed to get new client peer name: " << ec.message();
 		}
-		log << "{new client: [" << _tcp_peer.ip << ":" << _tcp_peer.port << "]}";
+		LOG_DEBUG << "new client: [" << _tcp_peer.ip << ":" << _tcp_peer.port << "]";
 	} else if (domain() == AF_LOCAL) {
 		auto ec = get_peer_name(_local_peer);
 		if (ec) {
-			log << "{failed to get new client peer name: " << ec.message() << "}";
+			LOG_ERROR << "failed to get new client peer name: " << ec.message();
 		}
-		log << "{new client: [" << _local_peer << "]}";
+		LOG_DEBUG << "new client: [" << _local_peer << "]";
 	}
 	if (err && err->type() != Flow::ErrType::NoError) {
-		log << "{add listen socket flow error: " << err->message() << "}";
+		LOG_ERROR << "add listen socket flow error: " << err->message();
 	} else {
-		log << "{client socket is flowing}";
+		LOG_DEBUG << "client socket is flowing";
 	}
 }
 
