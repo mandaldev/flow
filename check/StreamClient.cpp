@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 	auto client = std::make_shared<StreamClient>(flower, msg);
 	flower.add_task([&]()
 	{
-		if (type && type.value() == "Stream") {
+		if (type && type.value() == "tcp") {
 			auto ec = client->create_tcp_socket();
 			if (ec) {
 				flower.quit();
