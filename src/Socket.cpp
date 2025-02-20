@@ -352,7 +352,7 @@ std::error_code Socket::get_peer_name(std::string &addr) const
 	if (ec) {
 		return ec;
 	}
-	if (len != sizeof(in)) {
+	if (len > sizeof(in)) {
 		return std::make_error_code(std::errc::invalid_argument);
 	}
 	return convert_addr(in, len, addr);
