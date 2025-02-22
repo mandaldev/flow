@@ -32,6 +32,8 @@ public:
 	/// crete async stream socket
 	std::error_code create_stream_socket(int domain, int protocol = 0);
 
+	/// send data to peer, this is *async* action, data is cached to buffers
+	/// and will be sent to peer when write event arrives.
 	void send_bytes(std::string_view bytes);
 
 	/// create tcp socket
