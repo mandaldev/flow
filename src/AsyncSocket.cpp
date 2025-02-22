@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "AsyncSocket.hpp"
 #include "Error.hpp"
+#include "Flower.hpp"
 #include "Socket.hpp"
 #include <Com/log.hpp>
 #include <cerrno>
@@ -123,6 +124,8 @@ void AsyncSocket::setup_client_flow()
 					return;
 				}
 				break;
+			default:
+				break;
 			}
 		}
 		on_error(err);
@@ -153,6 +156,8 @@ void AsyncSocket::do_accept()
 		case EAGAIN:
 		// case EWOULDBLOCK:
 			return;
+		default:
+			break;
 		}
 		LOG_ERROR << "error from 'accept': " << err.message();
 		return;

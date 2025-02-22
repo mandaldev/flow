@@ -13,11 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_SRC_ERROR_HPP_
-#define _FLOW_SRC_ERROR_HPP_
+#ifndef FLOW_SRC_ERROR_HPP_
+#define FLOW_SRC_ERROR_HPP_
+#include <Com/raii.hpp>
 #include <string>
 #include <system_error>
-#include <Com/raii.hpp>
 
 namespace Flow {
 

@@ -14,23 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Socket.hpp"
+#include <Com/log.hpp>
 #include <cstddef>
 #include <cstring>
-#include <Com/log.hpp>
 #include <string_view>
 #include <sys/socket.h>
 
 extern "C" {
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
+#include <unistd.h>
 }
 
 namespace Flow {
 
 std::error_code get_error_code(int e)
 {
-	return std::make_error_code(std::errc(e));
+	if (e) {
+		return std::make_error_code(std::errc(e));
+	}
+	return std::error_code();
 }
 
 static std::error_code convert_addr(sockaddr_in const &in, IPv4Addr &out)

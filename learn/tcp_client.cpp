@@ -13,12 +13,16 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#include <iostream>
-#include <charconv>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <cerrno>
+#include <charconv>
 #include <cstring>
+#include <iostream>
+#include <netinet/in.h>
+#include <string>
+#include <sys/socket.h>
+#include <system_error>
+#include <unistd.h>
 
 int tcp_client(int argc, const char *argv[])
 {
@@ -55,7 +59,7 @@ int tcp_client(int argc, const char *argv[])
 		std::string msg_buf;
 		msg_buf.resize(1024);
 		std::cout << "client:> ";
-		std::cin.getline(msg_buf.data(), msg_buf.size());
+		std::cin.getline(msg_buf.data(), (std::streamsize)msg_buf.size());
 		std::string msg = msg_buf.data();
 		msg += '\n';
 		[[maybe_unused]]
@@ -82,7 +86,7 @@ int tcp_client(int argc, const char *argv[])
 				ln += 1;
 				auto l = std::string_view(msg.data(), ln);
 				std::cout << "server:> " << l;
-				msg.erase(msg.begin(), msg.begin() + ln);
+				msg.erase(msg.begin(), msg.begin() + (std::ptrdiff_t)ln);
 			} while (true);
 			break;
 		} while (true);

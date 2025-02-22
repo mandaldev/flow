@@ -13,10 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_SRC_ASYNCSOCKET_HPP_
-#define _FLOW_SRC_ASYNCSOCKET_HPP_
-#include "Socket.hpp"
+#ifndef FLOW_SRC_ASYNCSOCKET_HPP_
+#define FLOW_SRC_ASYNCSOCKET_HPP_
 #include "Flower.hpp"
+#include "Socket.hpp"
 #include <Com/memory.hpp>
 
 namespace Flow {
@@ -26,7 +26,7 @@ class AsyncSocket
 , public Com::EnableBindWeak<AsyncSocket>
 {
 public:
-	AsyncSocket(Flower &flower);
+	explicit AsyncSocket(Flower& flower);
 
 	/// crete async socket
 	std::error_code create_async_socket(int domain, int type, int protocol);

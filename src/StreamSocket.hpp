@@ -13,8 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_SRC_STREAMSOCKET_HPP_
-#define _FLOW_SRC_STREAMSOCKET_HPP_
+#ifndef FLOW_SRC_STREAMSOCKET_HPP_
+#define FLOW_SRC_STREAMSOCKET_HPP_
 #include "AsyncSocket.hpp"
 #include <list>
 #include <mutex>
@@ -27,7 +27,7 @@ class StreamSocket
 : public AsyncSocket
 {
 public:
-	StreamSocket(Flower &flower);
+	explicit StreamSocket(Flower& flower);
 
 	/// crete async stream socket
 	std::error_code create_stream_socket(int domain, int protocol = 0);

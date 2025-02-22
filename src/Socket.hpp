@@ -13,15 +13,15 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_SRC_SOCKET_HPP_
-#define _FLOW_SRC_SOCKET_HPP_
+#ifndef FLOW_SRC_SOCKET_HPP_
+#define FLOW_SRC_SOCKET_HPP_
+#include <Com/raii.hpp>
 #include <cstdint>
 #include <string>
-#include <system_error>
 #include <string_view>
+#include <system_error>
 #include <utility>
 #include <variant>
-#include <Com/raii.hpp>
 
 extern "C" {
 #include <sys/socket.h>

@@ -13,12 +13,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#include <iostream>
-#include <charconv>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <charconv>
 #include <cstring>
+#include <iostream>
+#include <sys/socket.h>
+#include <unistd.h>
 // #include <Com/string.hpp>
 // #include <string>
 
@@ -90,9 +90,10 @@ int tcp_server(int argc, const char *argv[])
 			ln += 1;
 			auto l = std::string_view(msg.data(), ln);
 			std::cout << "client:> " << l;
-			n = write(client_socket, l.data(), l.size());
+			[[maybe_unused]]
+			auto n = write(client_socket, l.data(), l.size());
 
-			msg.erase(msg.begin(), msg.begin() + ln);
+			msg.erase(msg.begin(), msg.begin() + (std::ptrdiff_t)ln);
 		} while (true);
 	} while (true);
 

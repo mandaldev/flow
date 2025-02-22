@@ -13,8 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_CHECK_STREAMCLIENT_HPP_
-#define _FLOW_CHECK_STREAMCLIENT_HPP_
+#ifndef FLOW_CHECK_STREAMCLIENT_HPP_
+#define FLOW_CHECK_STREAMCLIENT_HPP_
 #include "../src/StreamSocket.hpp"
 
 class StreamClient

@@ -13,17 +13,17 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_SRC_FLOWER_HPP_
-#define _FLOW_SRC_FLOWER_HPP_
+#ifndef FLOW_SRC_FLOWER_HPP_
+#define FLOW_SRC_FLOWER_HPP_
+#include "Error.hpp"
 #include <Com/raii.hpp>
-#include <mutex>
-#include <shared_mutex>
 #include <atomic>
 #include <functional>
 #include <map>
-#include <vector>
 #include <memory>
-#include "Error.hpp"
+#include <mutex>
+#include <shared_mutex>
+#include <vector>
 
 namespace Flow {
 

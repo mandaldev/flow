@@ -13,8 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#ifndef _FLOW_CHECK_STREAMSERVER_HPP_
-#define _FLOW_CHECK_STREAMSERVER_HPP_
+#ifndef FLOW_CHECK_STREAMSERVER_HPP_
+#define FLOW_CHECK_STREAMSERVER_HPP_
 #include "../src/StreamSocket.hpp"
 #include <memory>
 #include <set>
@@ -23,7 +23,7 @@ class StreamListenSocket
 : public Flow::StreamSocket
 {
 public:
-	StreamListenSocket(Flow::Flower &flower);
+	explicit StreamListenSocket(Flow::Flower& flower);
 
 	void remove_client(std::shared_ptr<Flow::AsyncSocket> c);
 

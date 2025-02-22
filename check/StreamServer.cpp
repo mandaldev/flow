@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "StreamServer.hpp"
+#include <Com/Xo/CommandLine.hpp>
 #include <Com/log.hpp>
 #include <memory>
-#include <Com/Xo/CommandLine.hpp>
 #include <string_view>
 #include <sys/socket.h>
 

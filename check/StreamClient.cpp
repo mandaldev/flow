@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "StreamClient.hpp"
-#include <Com/log.hpp>
 #include <Com/Xo/CommandLine.hpp>
+#include <Com/log.hpp>
 #include <sys/socket.h>
 
 StreamClient::StreamClient(Flow::Flower &flower, std::string_view msg)

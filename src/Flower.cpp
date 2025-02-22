@@ -72,7 +72,7 @@ std::shared_ptr<Error> Flower::run()
 		}
 
 		timeout = std::min(timeout, MAX_TIMEOUT);
-		auto n = epoll_wait(_epoll, events.data(), events.size(), timeout.count());
+		auto n = epoll_wait(_epoll, events.data(), (int)events.size(), (int)timeout.count());
 		if (n == 0) {
 			// timeout
 			timeout++;
