@@ -36,6 +36,21 @@ std::error_code get_error_code(int e)
 	return std::error_code();
 }
 
+bool is_abstract_local_addr(std::string_view name)
+{
+	return name.size() > 1 && name[0] == 0;
+}
+
+bool is_unamed_local_addr(std::string_view name)
+{
+	return name.empty();
+}
+
+std::string build_abstract_local_addr(std::string_view name)
+{
+	return '\0' + std::string(name.begin(), name.end());
+}
+
 static std::error_code convert_addr(sockaddr_in const &in, IPv4Addr &out)
 {
 	char buf[INET_ADDRSTRLEN] = "";
@@ -89,7 +104,7 @@ static std::error_code convert_addr(std::string_view in, sockaddr_un &out)
 		return std::make_error_code(std::errc::invalid_argument);
 	}
 	out.sun_family = AF_LOCAL;
-	if (in[0] == 0 && in.size() > 1) {
+	if (is_abstract_local_addr(in)) {
 		// abstract
 		std::memcpy(out.sun_path, in.data(), in.size());
 		return {};

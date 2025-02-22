@@ -37,6 +37,12 @@ struct IPv4Addr
 	uint16_t port = 0;
 };
 
+bool is_abstract_local_addr(std::string_view name);
+
+bool is_unamed_local_addr(std::string_view name);
+
+std::string build_abstract_local_addr(std::string_view name);
+
 /// socket interface - wrapper of system socket api
 class Socket
 : public virtual Com::Unique
