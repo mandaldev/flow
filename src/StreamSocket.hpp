@@ -16,6 +16,7 @@
 #ifndef FLOW_SRC_STREAMSOCKET_HPP_
 #define FLOW_SRC_STREAMSOCKET_HPP_
 #include "AsyncSocket.hpp"
+#include <functional>
 #include <list>
 #include <mutex>
 #include <string_view>
@@ -36,6 +37,10 @@ public:
 	/// and will be sent to peer when write event arrives.
 	void send_bytes(std::string_view bytes);
 
+	/// call `receiver` on data arrives or override `on_receive_bytes(bytes)` method
+	/// to handle data sent by peer
+	void on_receive_bytes(std::function<void(std::string_view)> receiver);
+
 	/// create tcp socket
 	std::error_code create_tcp_socket();
 
@@ -50,7 +55,7 @@ public:
 
 protected:
 	/// override this to receive data
-	virtual void on_receive_bytes(std::string_view bytes) {}
+	virtual void on_receive_bytes(std::string_view bytes);
 
 	void on_write() override;
 
@@ -60,6 +65,7 @@ private:
 	std::mutex _mtx_data;
 	std::list<std::string> _data;
 	size_t _bytes_sent = 0;
+	std::function<void(std::string_view)> _receiver;
 };
 
 }

@@ -47,6 +47,14 @@ void StreamSocket::send_bytes(std::string_view bytes)
 	}));
 }
 
+void StreamSocket::on_receive_bytes(std::function<void(std::string_view)> receiver)
+{
+	_flower.add_task(bind_weak([this, receiver]()
+	{
+		_receiver = receiver;
+	}));
+}
+
 std::error_code StreamSocket::create_tcp_socket()
 {
 	return create_stream_socket(AF_INET, 0);
@@ -73,6 +81,13 @@ std::error_code StreamSocket::listen_on(std::string_view addr, int backlog)
 		return listen(backlog);
 	}
 	return ec;
+}
+
+void StreamSocket::on_receive_bytes(std::string_view bytes)
+{
+	if (_receiver) {
+		_receiver(bytes);
+	}
 }
 
 void StreamSocket::on_write()
