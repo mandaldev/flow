@@ -39,7 +39,7 @@ public:
 
 	/// call `receiver` on data arrives or override `on_receive_bytes(bytes)` method
 	/// to handle data sent by peer
-	void on_receive_bytes(std::function<void(std::string_view)> receiver);
+	void on_receive_bytes(std::function<void(std::string_view)> const &receiver);
 
 	/// create tcp socket
 	std::error_code create_tcp_socket();

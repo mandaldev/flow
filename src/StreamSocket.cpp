@@ -47,7 +47,7 @@ void StreamSocket::send_bytes(std::string_view bytes)
 	}));
 }
 
-void StreamSocket::on_receive_bytes(std::function<void(std::string_view)> receiver)
+void StreamSocket::on_receive_bytes(std::function<void(std::string_view)> const &receiver)
 {
 	_flower.add_task(bind_weak([this, receiver]()
 	{
