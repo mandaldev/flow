@@ -20,24 +20,23 @@
 
 namespace Flow {
 
-enum class MsgType : int
-{
-	Heartbeat,
-	Shakehand,
-	UserMessage,
-};
-
-struct Head
-{
-	int version_code = 0;
-	MsgType type = MsgType::Heartbeat;
-	size_t msg_size = 0;
-};
-
 class RpcSocket
 : public StreamSocket
 {
 public:
+	enum class MsgType : int
+	{
+		Heartbeat,
+		Shakehand,
+		UserMessage,
+	};
+	struct Head
+	{
+		int version_code = 0;
+		MsgType type = MsgType::Heartbeat;
+		size_t msg_size = 0;
+	};
+
 	explicit RpcSocket(Flower &flower);
 
 	void send_encoded_message(Com::Mab::BytesView msg);

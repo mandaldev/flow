@@ -19,7 +19,7 @@
 
 namespace Com::Mab {
 template <>
-bool deserialize<Flow::Head>(Com::Mab::BytesView in, size_t &pos, Flow::Head &head)
+bool deserialize<Flow::RpcSocket::Head>(Com::Mab::BytesView in, size_t &pos, Flow::RpcSocket::Head &head)
 {
 	if (Com::Mab::deserialize_kvs(
 		in, pos,
@@ -37,7 +37,7 @@ bool deserialize<Flow::Head>(Com::Mab::BytesView in, size_t &pos, Flow::Head &he
 
 namespace Flow {
 
-static Com::Mab::Bytes serialize_head(Head const &head)
+static Com::Mab::Bytes serialize_head(RpcSocket::Head const &head)
 {
 	Com::Mab::Bytes bytes;
 	// rpc version code
