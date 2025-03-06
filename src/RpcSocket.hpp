@@ -39,13 +39,18 @@ public:
 
 	explicit RpcSocket(Flower &flower);
 
+	/// send a message to peer
 	void send_encoded_message(Com::Mab::BytesView msg);
 
+	/// call `receiver` on message arrives if `on_receive_encoded_message(msg)` is not overrided
 	void on_receive_encoded_message(std::function<void(Com::Mab::BytesView msg)> const &receiver);
 
 	size_t get_rpc_version_code() const;
 
 protected:
+	/// override this to receive message sent by peer
+	virtual void on_receive_encoded_message(Com::Mab::BytesView msg);
+
 	void on_receive_bytes(std::string_view bytes) override;
 
 private:

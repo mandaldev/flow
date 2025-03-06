@@ -94,6 +94,13 @@ size_t RpcSocket::get_rpc_version_code() const
 	return 1;
 }
 
+void RpcSocket::on_receive_encoded_message(Com::Mab::BytesView msg)
+{
+	if (_receiver) {
+		_receiver(msg);
+	}
+}
+
 void RpcSocket::on_receive_bytes(std::string_view bytes)
 {
 	while (bytes.size()) {
@@ -140,9 +147,7 @@ void RpcSocket::try_complete_message(std::string_view &bytes)
 	_buffer.insert(_buffer.end(), bytes.begin(), bytes.begin() + copy_size);
 	bytes = bytes.substr(copy_size);
 	if (_buffer.size() == h.msg_size) { // message completes
-		if (_receiver) {
-			_receiver(_buffer);
-		}
+		on_receive_encoded_message(_buffer);
 		_head.reset();
 		_buffer.clear();
 	}
