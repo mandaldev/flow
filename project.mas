@@ -24,6 +24,22 @@
       dep [
         "Com"
       ]
+
+      install [
+        {
+          dir "Flow"
+          headers [
+            "src/Flower.hpp"
+            "src/Error.hpp"
+            "src/Socket.hpp"
+            "src/AsyncSocket.hpp"
+            "src/StreamSocket.hpp"
+            "src/RpcSocket.hpp"
+            "src/RpcService.hpp"
+            "src/RpcClient.hpp"
+          ]
+        }
+      ]
     }
 
     learn_tcp {
