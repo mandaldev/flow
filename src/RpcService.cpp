@@ -23,7 +23,7 @@ RpcService::RpcService(Flower &flower)
 {
 }
 
-void RpcService::init(Config const& conf)
+void RpcService::init(Config const &conf)
 {
 	_conf = conf;
 	_flower.add_task([this]()
@@ -83,7 +83,7 @@ std::error_code RpcService::ListenSocket::setup(std::variant<IPv4Addr, std::stri
 	}
 	ec = listen_on(abs_addr, backlog);
 	if (ec) {
-		LOG_ERROR << "failed to listen at '" << print_local_addr(abs_addr) << "': " << ec.message();
+		LOG_ERROR << "failed to listen at '" << format_local_addr(abs_addr) << "': " << ec.message();
 	}
 	_addr = abs_addr;
 	return ec;
@@ -104,36 +104,27 @@ void RpcService::ListenSocket::on_accept(Flow::Socket client_socket)
 
 void RpcService::ListenSocket::on_close()
 {
+	LOG_INFO << "Listen socket closed: '" << format_addr(_addr) << "'";
 	_owner._listen_socks.erase(shared_from_this());
 }
 
 void RpcService::ListenSocket::on_error(std::shared_ptr<Flow::Error> err)
 {
 	if (err && err->type() != ErrType::NoError) {
-		LOG_ERROR << "Listen socket has an error: " << err->message();
+		LOG_ERROR << "Listen socket has an error: '" << format_addr(_addr) << "': " << err->message();
 	}
 }
 
 void RpcService::ListenSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 {
-	if (auto ipv4 = std::get_if<IPv4Addr>(&_addr)) {
-		if (err && err->type() != ErrType::NoError) {
-			LOG_ERROR << "Flow listen socket error: '" << ipv4->tostr() << "': " << err->message();
-		} else {
-			LOG_ERROR << "Listen socket flowing: '"
-				<< ipv4->ip << ":" << ipv4->port << "'";
-		}
-	} else if (auto laddr = std::get_if<std::string>(&_addr)) {
-		if (err && err->type() != ErrType::NoError) {
-			LOG_ERROR << "Flow listen socket error: '" << print_local_addr(*laddr) << "': " << err->message();
-		} else {
-			LOG_ERROR << "Listen socket flowing: '"
-				<< ipv4->ip << ":" << ipv4->port << "'";
-		}
+	if (err && err->type() != ErrType::NoError) {
+		LOG_ERROR << "Flow listen socket error: '" << format_addr(_addr) << "': " << err->message();
+	} else {
+		LOG_INFO << "Listen socket flowing: '" << format_addr(_addr) << "'";
 	}
 }
 
-RpcService::ServerSocket::ServerSocket(Flower& flower, RpcService& owner, std::variant<IPv4Addr, std::string> const &addr)
+RpcService::ServerSocket::ServerSocket(Flower &flower, RpcService &owner, std::variant<IPv4Addr, std::string> const &addr)
 : RpcSocket(flower)
 , _owner(owner)
 , _addr(addr)
@@ -148,26 +139,16 @@ void RpcService::ServerSocket::on_close()
 void RpcService::ServerSocket::on_error(std::shared_ptr<Flow::Error> err)
 {
 	if (err && err->type() != ErrType::NoError) {
-		LOG_ERROR << "Server socket has an error: " << err->message();
+		LOG_ERROR << "Server socket '" << format_addr(_addr) << "' has an error: " << err->message();
 	}
 }
 
 void RpcService::ServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 {
-	if (auto ipv4 = std::get_if<IPv4Addr>(&_addr)) {
-		if (err && err->type() != ErrType::NoError) {
-			LOG_ERROR << "Flow server socket error: '" << ipv4->tostr() << "': " << err->message();
-		} else {
-			LOG_ERROR << "Server socket flowing: '"
-				<< ipv4->ip << ":" << ipv4->port << "'";
-		}
-	} else if (auto laddr = std::get_if<std::string>(&_addr)) {
-		if (err && err->type() != ErrType::NoError) {
-			LOG_ERROR << "Flow server socket error: '" << print_local_addr(*laddr) << "': " << err->message();
-		} else {
-			LOG_ERROR << "Server socket flowing: '"
-				<< ipv4->ip << ":" << ipv4->port << "'";
-		}
+	if (err && err->type() != ErrType::NoError) {
+		LOG_ERROR << "Flow server socket error: '" << format_addr(_addr) << "': " << err->message();
+	} else {
+		LOG_INFO << "Server socket flowing: '" << format_addr(_addr) << "'";
 	}
 }
 

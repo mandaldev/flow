@@ -51,12 +51,23 @@ std::string build_abstract_local_addr(std::string_view name)
 	return '\0' + std::string(name.begin(), name.end());
 }
 
-std::string_view print_local_addr(std::string_view name)
+std::string_view format_local_addr(std::string_view name)
 {
 	if (is_abstract_local_addr(name)) {
 		return name.substr(1);
 	}
 	return name;
+}
+
+std::string format_addr(std::variant<IPv4Addr, std::string> const &addr)
+{
+	if (auto ipv4 = std::get_if<IPv4Addr>(&addr)) {
+		return ipv4->tostr();
+	}
+	if (auto laddr = std::get_if<std::string>(&addr)) {
+		return std::string(format_local_addr(*laddr));
+	}
+	return "<invalid-addr>";
 }
 
 static std::error_code convert_addr(sockaddr_in const &in, IPv4Addr &out)

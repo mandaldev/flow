@@ -48,7 +48,9 @@ bool is_unamed_local_addr(std::string_view name);
 
 std::string build_abstract_local_addr(std::string_view name);
 
-std::string_view print_local_addr(std::string_view name);
+std::string_view format_local_addr(std::string_view name);
+
+std::string format_addr(std::variant<IPv4Addr, std::string> const &addr);
 
 /// socket interface - wrapper of system socket api
 class Socket
