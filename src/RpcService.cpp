@@ -26,6 +26,23 @@ RpcService::RpcService(Flower &flower)
 void RpcService::init(Config const& conf)
 {
 	_conf = conf;
+	_flower.add_task([this]()
+	{
+		for (auto const &ipv4 : _conf._ip_addrs) {
+			auto listen_sock = std::make_shared<ListenSocket>(_flower, *this);
+			auto ec = listen_sock->setup(ipv4, _conf.backlog);
+			if (!ec) {
+				_listen_socks.insert(listen_sock);
+			}
+		}
+		for (auto const &name : _conf._local_addrs) {
+			auto listen_sock = std::make_shared<ListenSocket>(_flower, *this);
+			auto ec = listen_sock->setup(name, _conf.backlog);
+			if (!ec) {
+				_listen_socks.insert(listen_sock);
+			}
+		}
+	});
 }
 
 RpcService::ListenSocket::ListenSocket(Flower &flower, RpcService &owner)
