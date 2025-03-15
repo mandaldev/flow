@@ -35,6 +35,11 @@ struct IPv4Addr
 {
 	std::string ip;
 	uint16_t port = 0;
+
+	std::string tostr() const
+	{
+		return ip + ':' + std::to_string(port);
+	}
 };
 
 bool is_abstract_local_addr(std::string_view name);
@@ -42,6 +47,8 @@ bool is_abstract_local_addr(std::string_view name);
 bool is_unamed_local_addr(std::string_view name);
 
 std::string build_abstract_local_addr(std::string_view name);
+
+std::string_view print_local_addr(std::string_view name);
 
 /// socket interface - wrapper of system socket api
 class Socket

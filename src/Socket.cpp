@@ -51,6 +51,14 @@ std::string build_abstract_local_addr(std::string_view name)
 	return '\0' + std::string(name.begin(), name.end());
 }
 
+std::string_view print_local_addr(std::string_view name)
+{
+	if (is_abstract_local_addr(name)) {
+		return name.substr(1);
+	}
+	return name;
+}
+
 static std::error_code convert_addr(sockaddr_in const &in, IPv4Addr &out)
 {
 	char buf[INET_ADDRSTRLEN] = "";
