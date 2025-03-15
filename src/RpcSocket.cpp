@@ -82,23 +82,38 @@ void RpcSocket::send_encoded_message(Com::Mab::BytesView msg)
 	}
 }
 
-void RpcSocket::on_receive_encoded_message(std::function<void(Com::Mab::BytesView msg)> const &receiver)
-{
-	_flower.post_task(bind_weak([this, receiver]{
-		_receiver = receiver;
-	}));
-}
-
 size_t RpcSocket::get_rpc_version_code() const
 {
 	return 1;
 }
 
-void RpcSocket::on_receive_encoded_message(Com::Mab::BytesView msg)
+void RpcSocket::on_receive_encoded_message(Head const &head, Com::Mab::BytesView msg)
 {
-	if (_receiver) {
-		_receiver(msg);
+	switch (head.type) {
+	case MsgType::UserMessage: {
+		std::string name;
+		size_t pos = 0;
+		if (Com::Mab::deserialize(msg, pos, name)) {
+			auto it = _receivers.find(name);
+			if (it != _receivers.end() && it->second) {
+				it->second(msg.subview(pos));
+			}
+		} else {
+			LOG_ERROR << "rpc message invalid: pos = " << pos << ", size = " << msg.size();
+		}
+		break;
 	}
+	default: // TODO
+		break;
+	}
+}
+
+void RpcSocket::set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::Mab::BytesView)> const& receiver)
+{
+	auto name = std::string(rpc_name);
+	_flower.add_task(bind_weak([this, name, receiver]{
+		_receivers[name] = receiver;
+	}));
 }
 
 void RpcSocket::on_receive_bytes(std::string_view bytes)
@@ -147,7 +162,7 @@ void RpcSocket::try_complete_message(std::string_view &bytes)
 	_buffer.insert(_buffer.end(), bytes.begin(), bytes.begin() + copy_size);
 	bytes = bytes.substr(copy_size);
 	if (_buffer.size() == h.msg_size) { // message completes
-		on_receive_encoded_message(_buffer);
+		on_receive_encoded_message(h, _buffer);
 		_head.reset();
 		_buffer.clear();
 	}

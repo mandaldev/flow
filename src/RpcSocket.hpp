@@ -39,26 +39,39 @@ public:
 
 	explicit RpcSocket(Flower &flower);
 
-	/// send a message to peer
-	void send_encoded_message(Com::Mab::BytesView msg);
-
-	/// call `receiver` on message arrives if `on_receive_encoded_message(msg)` is not overrided
-	void on_receive_encoded_message(std::function<void(Com::Mab::BytesView msg)> const &receiver);
-
 	size_t get_rpc_version_code() const;
 
-protected:
-	/// override this to receive message sent by peer
-	virtual void on_receive_encoded_message(Com::Mab::BytesView msg);
+	/// call a rpc or response
+	template <typename... Args>
+	bool call(std::string_view rpc_name, Args&&... args)
+	{
+		Com::Mab::Bytes out;
+		if (!Com::Mab::serialize(out, rpc_name)
+		|| !Com::Mab::serialize(out, std::forward<decltype(args)>(args)...)) {
+			return false;
+		}
+		send_encoded_message(out);
+		return true;
+	}
 
+	/// handle different rpc calls
+	void set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::Mab::BytesView)> const &receiver);
+
+protected:
 	void on_receive_bytes(std::string_view bytes) override;
 
 private:
+	void on_receive_encoded_message(Head const &head, Com::Mab::BytesView msg);
+
+	/// send a message to peer
+	void send_encoded_message(Com::Mab::BytesView msg);
+
 	bool try_complete_head(std::string_view &bytes);
 
 	void try_complete_message(std::string_view &bytes);
 
-	std::function<void(Com::Mab::BytesView msg)> _receiver;
+	std::map<std::string, std::function<void(Com::Mab::BytesView msg)>> _receivers;
+
 	std::optional<Head> _head;
 	// received part-message buffer (after head)
 	Com::Mab::Bytes _buffer;
