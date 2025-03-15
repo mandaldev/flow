@@ -18,6 +18,7 @@
         "src/StreamSocket.cpp"
         "src/RpcSocket.cpp"
         "src/RpcService.cpp"
+        "src/RpcClient.cpp"
       ]
 
       dep [
