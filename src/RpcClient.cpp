@@ -26,12 +26,15 @@ RpcClient::RpcClient(Flower &flower)
 void RpcClient::init(Config const &conf)
 {
 	_conf = conf;
-	_sock = std::make_shared<ClientSocket>(_flower, *this);
-	auto ec = _sock->setup(_conf.server_addr);
-	if (ec) {
-		_sock.reset();
-	}
-	// TODO
+	_flower.add_task([this]()
+	{
+		_sock = std::make_shared<ClientSocket>(_flower, *this);
+		auto ec = _sock->setup(_conf.server_addr);
+		if (ec) {
+			_sock.reset();
+		}
+		// TODO
+	});
 }
 
 
