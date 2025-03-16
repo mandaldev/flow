@@ -60,5 +60,6 @@
 
     streamserver "check/streamserver.mas"
     streamclient "check/streamclient.mas"
+    rpc_check "check/rpc.mas"
   }
 }
