@@ -19,6 +19,8 @@
 
 namespace Flow {
 
+/// RPC Client class
+/// all public api can be called outside of Flow thread
 class RpcClient
 {
 public:

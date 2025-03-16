@@ -20,6 +20,8 @@
 
 namespace Flow {
 
+/// RPC Service class
+/// all public api can be called outside of Flow thread
 class RpcService
 : public Com::Unique
 {
