@@ -1,11 +1,11 @@
 {
-  name "flow"
+  name "Flow"
   author "Mandal Dev"
   desc "a network io lib"
   license "GPLv3"
 
   target {
-    flow {
+    Flow {
       language "c++"
       std "c++17"
       type "slib"
