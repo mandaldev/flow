@@ -65,21 +65,30 @@ RpcSocket::RpcSocket(Flower &flower)
 {
 }
 
-void RpcSocket::send_encoded_message(Com::Mab::BytesView msg)
+void RpcSocket::send_rpc_call(Com::Mab::BytesView msg)
 {
-	if (msg.empty()) {
-		LOG_DEBUG << "empty message will not be sent!";
-		return;
-	}
+	send_rpc_call(std::vector{msg});
+}
+
+void RpcSocket::send_rpc_call(std::vector<Com::Mab::BytesView> const &datas)
+{
 	Head head;
 	head.version_code = 1;
 	head.type = MsgType::UserMessage;
-	head.msg_size = msg.size();
+	for (auto &data : datas) {
+		head.msg_size += data.size();
+	}
+	if (head.msg_size == 0) {
+		LOG_DEBUG << "empty message will not be sent!";
+		return;
+	}
 	Com::Mab::Bytes pack = serialize_head(head);
 	if (pack.size()) {
 		send_bytes({(const char*)pack.data(), pack.size()});
-		send_bytes({(const char*)msg.data(), msg.size()});
-		LOG_DEBUG << "send user message, size: " << msg.size();
+		for (auto &data : datas) {
+			send_bytes({(const char*)data.data(), data.size()});
+		}
+		LOG_DEBUG << "send user message, size: " << head.msg_size;
 	}
 }
 

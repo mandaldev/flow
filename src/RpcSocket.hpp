@@ -17,6 +17,7 @@
 #define FLOW_SRC_RPCSOCKET_HPP
 #include "StreamSocket.hpp"
 #include <Com/Mab/serialize.hpp>
+#include <Com/log.hpp>
 
 namespace Flow {
 
@@ -41,30 +42,34 @@ public:
 
 	size_t get_rpc_version_code() const;
 
-	/// call a rpc or response
-	template <typename... Args>
-	bool call(std::string_view rpc_name, Args&&... args)
+	/// call a rpc or responses it
+	template <typename Arg>
+	bool call(std::string_view rpc_name, Arg &&arg)
 	{
 		Com::Mab::Bytes out;
 		if (!Com::Mab::serialize(out, rpc_name)
-		|| !Com::Mab::serialize(out, std::forward<decltype(args)>(args)...)) {
+		|| !Com::Mab::serialize(out, std::forward<decltype(arg)>(arg))) {
+			LOG_ERROR << "failed to serialize arg";
 			return false;
 		}
-		send_encoded_message(out);
+		send_rpc_call(out);
 		return true;
 	}
 
 	/// handle different rpc calls
 	void set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::Mab::BytesView)> const &receiver);
 
+	/// send an encoded rpc call to peer
+	void send_rpc_call(Com::Mab::BytesView msg);
+
+	/// same as `BytesView`, by bytes can be fractions, avoid bytes copyness
+	void send_rpc_call(std::vector<Com::Mab::BytesView> const &datas);
+
 protected:
 	void on_receive_bytes(std::string_view bytes) override;
 
 private:
 	void on_receive_encoded_message(Head const &head, Com::Mab::BytesView msg);
-
-	/// send a message to peer
-	void send_encoded_message(Com::Mab::BytesView msg);
 
 	bool try_complete_head(std::string_view &bytes);
 
