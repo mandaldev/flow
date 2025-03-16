@@ -85,6 +85,7 @@ std::error_code AsyncSocket::close()
 	if (!is_created()) {
 		return {};
 	}
+	_connecting = false;
 	_flower.remove_flow(socket_fd(), bind_weak([this](std::shared_ptr<Error> err) {
 		auto ec = Socket::close();
 		if (ec) {
