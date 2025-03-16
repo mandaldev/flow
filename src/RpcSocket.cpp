@@ -78,7 +78,8 @@ void RpcSocket::send_encoded_message(Com::Mab::BytesView msg)
 	Com::Mab::Bytes pack = serialize_head(head);
 	if (pack.size()) {
 		send_bytes({(const char*)pack.data(), pack.size()});
-		LOG_DEBUG << "send user message, size: " << pack.size();
+		send_bytes({(const char*)msg.data(), msg.size()});
+		LOG_DEBUG << "send user message, size: " << msg.size();
 	}
 }
 
@@ -141,7 +142,7 @@ bool RpcSocket::try_complete_head(std::string_view &bytes)
 	bytes = bytes.substr(copy_size);
 	if (_buffer.size() == head_size) {
 		Head h;
-		if (Com::Mab::deserialize(bytes, h)) {
+		if (Com::Mab::deserialize(_buffer, h)) {
 			_head = h;
 			_buffer.clear();
 		} else {
