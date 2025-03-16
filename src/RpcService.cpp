@@ -53,6 +53,7 @@ RpcService::ListenSocket::ListenSocket(Flower &flower, RpcService &owner)
 
 std::error_code RpcService::ListenSocket::setup(std::variant<IPv4Addr, std::string> const &addr, int backlog)
 {
+	_addr = addr;
 	if (std::holds_alternative<IPv4Addr>(addr)) {
 		auto &ipv4 = std::get<IPv4Addr>(addr);
 		auto ec = create_tcp_socket();
@@ -65,7 +66,6 @@ std::error_code RpcService::ListenSocket::setup(std::variant<IPv4Addr, std::stri
 			LOG_ERROR << "failed to listen at '" << ipv4.tostr() << "': " << ec.message();
 			return ec;
 		}
-		_addr = ipv4;
 		return ec;
 	}
 	auto &local_addr = std::get<std::string>(addr);
@@ -85,7 +85,6 @@ std::error_code RpcService::ListenSocket::setup(std::variant<IPv4Addr, std::stri
 	if (ec) {
 		LOG_ERROR << "failed to listen at '" << format_local_addr(abs_addr) << "': " << ec.message();
 	}
-	_addr = abs_addr;
 	return ec;
 }
 

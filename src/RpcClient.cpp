@@ -43,6 +43,7 @@ RpcClient::ClientSocket::ClientSocket(Flower &flower, RpcClient &owner)
 
 std::error_code RpcClient::ClientSocket::setup(std::variant<IPv4Addr, std::string> const &addr)
 {
+	_addr = addr;
 	if (std::holds_alternative<IPv4Addr>(addr)) {
 		auto &ipv4 = std::get<IPv4Addr>(addr);
 		auto ec = create_tcp_socket();
@@ -55,7 +56,6 @@ std::error_code RpcClient::ClientSocket::setup(std::variant<IPv4Addr, std::strin
 			LOG_ERROR << "failed to connect to '" << ipv4.tostr() << "': " << ec.message();
 			return ec;
 		}
-		_addr = ipv4;
 		return ec;
 	}
 	auto &local_addr = std::get<std::string>(addr);
@@ -75,7 +75,6 @@ std::error_code RpcClient::ClientSocket::setup(std::variant<IPv4Addr, std::strin
 	if (ec) {
 		LOG_ERROR << "failed to connect to '" << format_local_addr(abs_addr) << "': " << ec.message();
 	}
-	_addr = abs_addr;
 	return ec;
 }
 
