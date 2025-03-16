@@ -29,11 +29,29 @@ public:
 		std::chrono::milliseconds connection_timeout{10000};
 		/// connection retry timeout if fails to connect server
 		std::chrono::milliseconds retry_timeout{5000};
+		/// request timeout if response is not received from server
+		std::chrono::milliseconds request_timeout{5000};
 	};
 
 	RpcClient(Flower &flower);
 
 	void init(Config const &conf);
+
+	/// send a request. request will be sent when connected to server
+	template <typename Arg>
+	bool request(std::string_view rpc_name, Arg &&arg)
+	{
+		Com::Mab::Bytes out;
+		if (!Com::Mab::serialize(out, rpc_name)
+		|| !Com::Mab::serialize(out, std::forward<decltype(arg)>(arg))) {
+			LOG_ERROR << "failed to serialize arg";
+			return false;
+		}
+		request(std::move(out));
+		return true;
+	}
+
+	bool is_connected() const;
 
 protected:
 	/// this is the moment when you add rpc receivers
@@ -63,11 +81,18 @@ private:
 		std::variant<IPv4Addr, std::string> _addr;
 	};
 
+	void request(Com::Mab::Bytes data);
+
+	void flush_requests();
+
 private:
 	Flower &_flower;
 
 	Config _conf;
 	std::shared_ptr<ClientSocket> _sock;
+
+	std::atomic_bool _connected{false};
+	std::vector<Com::Mab::Bytes> _requests;
 };
 
 }

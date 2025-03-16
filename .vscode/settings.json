@@ -61,6 +61,13 @@
 		"syncstream": "cpp",
 		"thread": "cpp",
 		"variant": "cpp",
-		"format": "cpp"
+		"format": "cpp",
+		"chrono": "cpp",
+		"list": "cpp",
+		"set": "cpp",
+		"unordered_set": "cpp",
+		"iomanip": "cpp",
+		"shared_mutex": "cpp",
+		"span": "cpp"
 	}
 }

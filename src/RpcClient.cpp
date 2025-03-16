@@ -38,6 +38,35 @@ void RpcClient::init(Config const &conf)
 }
 
 
+bool RpcClient::is_connected() const
+{
+	return _connected;
+}
+
+void RpcClient::request(Com::Mab::Bytes data)
+{
+	_flower.add_task([this, data = std::move(data)]() mutable
+	{
+		if (is_connected()) {
+			_sock->send_rpc_call(data);
+			return;
+		}
+		_requests.push_back(std::move(data));
+	});
+}
+
+void RpcClient::flush_requests()
+{
+	if (!_sock) {
+		return;
+	}
+	for (auto &req : _requests) {
+		_sock->send_rpc_call(req);
+	}
+	_requests.clear();
+}
+
+
 RpcClient::ClientSocket::ClientSocket(Flower &flower, RpcClient &owner)
 : RpcSocket(flower)
 , _owner(owner)
@@ -85,6 +114,7 @@ void RpcClient::ClientSocket::on_close()
 {
 	LOG_INFO << "Client socket closed: '" << format_addr(_addr) << "'";
 	_owner._sock.reset();
+	_owner._connected = false;
 	// TODO
 }
 
@@ -110,7 +140,9 @@ void RpcClient::ClientSocket::on_connect(std::error_code ec)
 		LOG_ERROR << "Client socket connection error: '" << format_addr(_addr) << "': " << ec.message();
 		return;
 	}
+	_owner._connected = true;
 	_owner.on_connect(_owner._sock);
+	_owner.flush_requests();
 }
 
 }

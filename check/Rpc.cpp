@@ -60,8 +60,6 @@ void RpcTestClient::on_connect(std::weak_ptr<RpcSocket> cnt)
 		Com::Mab::deserialize(data, msg);
 		LOG_INFO << "answer from server: " << msg;
 	});
-	std::string_view msg = "hello, what's your code?";
-	sock->call("ask", msg);
 }
 
 int main(int argc, const char *argv[])
@@ -80,6 +78,9 @@ int main(int argc, const char *argv[])
 		RpcClient::Config conf;
 		conf.server_addr = ADDR;
 		client.init(conf);
+
+		std::string_view msg = "hello, what's your code?";
+		client.request("ask", msg);
 	});
 	flower.run();
 	fut.get();
