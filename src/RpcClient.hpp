@@ -43,7 +43,7 @@ public:
 	template <typename Arg>
 	bool request(std::string_view rpc_name, Arg &&arg)
 	{
-		Com::Mab::Bytes out;
+		Com::Bytes out;
 		if (!Com::Mab::serialize(out, rpc_name)
 		|| !Com::Mab::serialize(out, std::forward<decltype(arg)>(arg))) {
 			LOG_ERROR << "failed to serialize arg";
@@ -83,7 +83,7 @@ private:
 		std::variant<IPv4Addr, std::string> _addr;
 	};
 
-	void request(Com::Mab::Bytes data);
+	void request(Com::Bytes data);
 
 	void flush_requests();
 
@@ -94,7 +94,7 @@ private:
 	std::shared_ptr<ClientSocket> _sock;
 
 	std::atomic_bool _connected{false};
-	std::vector<Com::Mab::Bytes> _requests;
+	std::vector<Com::Bytes> _requests;
 };
 
 }

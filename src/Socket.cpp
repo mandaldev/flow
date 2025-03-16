@@ -234,7 +234,7 @@ bool Socket::is_created() const
 	return _fd >= 0;
 }
 
-std::error_code Socket::read(std::string &buf, size_t count) const
+std::error_code Socket::read(Com::Bytes &buf, size_t count) const
 {
 	buf.resize(count);
 	auto n = ::read(_fd, buf.data(), count);
@@ -246,7 +246,7 @@ std::error_code Socket::read(std::string &buf, size_t count) const
 	return get_error_code();
 }
 
-std::error_code Socket::write(std::string_view const &bytes, size_t &writen_count) const
+std::error_code Socket::write(Com::BytesView bytes, size_t &writen_count) const
 {
 	writen_count = 0;
 	auto n = ::write(_fd, bytes.data(), bytes.size());

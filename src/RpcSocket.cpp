@@ -19,7 +19,7 @@
 
 namespace Com::Mab {
 template <>
-bool deserialize<Flow::RpcSocket::Head>(Com::Mab::BytesView in, size_t &pos, Flow::RpcSocket::Head &head)
+bool deserialize<Flow::RpcSocket::Head>(Com::BytesView in, size_t &pos, Flow::RpcSocket::Head &head)
 {
 	if (Com::Mab::deserialize_kvs(
 		in, pos,
@@ -37,9 +37,9 @@ bool deserialize<Flow::RpcSocket::Head>(Com::Mab::BytesView in, size_t &pos, Flo
 
 namespace Flow {
 
-static Com::Mab::Bytes serialize_head(RpcSocket::Head const &head)
+static Com::Bytes serialize_head(RpcSocket::Head const &head)
 {
-	Com::Mab::Bytes bytes;
+	Com::Bytes bytes;
 	// rpc version code
 	if (!Com::Mab::serialize_kvs(
 		bytes,
@@ -65,12 +65,14 @@ RpcSocket::RpcSocket(Flower &flower)
 {
 }
 
-void RpcSocket::send_rpc_call(Com::Mab::BytesView msg)
+void RpcSocket::send_rpc_call(Com::Bytes &&data)
 {
-	send_rpc_call(std::vector{msg});
+	std::vector<Com::Bytes> datas;
+	datas.push_back(std::move(data));
+	send_rpc_call(std::move(datas));
 }
 
-void RpcSocket::send_rpc_call(std::vector<Com::Mab::BytesView> const &datas)
+void RpcSocket::send_rpc_call(std::vector<Com::Bytes> &&datas)
 {
 	Head head;
 	head.version_code = 1;
@@ -82,11 +84,11 @@ void RpcSocket::send_rpc_call(std::vector<Com::Mab::BytesView> const &datas)
 		LOG_DEBUG << "empty message will not be sent!";
 		return;
 	}
-	Com::Mab::Bytes pack = serialize_head(head);
+	Com::Bytes pack = serialize_head(head);
 	if (pack.size()) {
-		send_bytes({(const char*)pack.data(), pack.size()});
+		send_bytes(std::move(pack));
 		for (auto &data : datas) {
-			send_bytes({(const char*)data.data(), data.size()});
+			send_bytes(std::move(data));
 		}
 		LOG_DEBUG << "send user message, size: " << head.msg_size;
 	}
@@ -97,7 +99,7 @@ size_t RpcSocket::get_rpc_version_code() const
 	return 1;
 }
 
-void RpcSocket::on_receive_encoded_message(Head const &head, Com::Mab::BytesView msg)
+void RpcSocket::on_receive_encoded_message(Head const &head, Com::BytesView msg)
 {
 	switch (head.type) {
 	case MsgType::UserMessage: {
@@ -118,7 +120,7 @@ void RpcSocket::on_receive_encoded_message(Head const &head, Com::Mab::BytesView
 	}
 }
 
-void RpcSocket::set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::Mab::BytesView)> const& receiver)
+void RpcSocket::set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::BytesView)> const& receiver)
 {
 	auto name = std::string(rpc_name);
 	_flower.add_task(bind_weak([this, name, receiver]{
@@ -126,17 +128,18 @@ void RpcSocket::set_rpc_receiver(std::string_view rpc_name, std::function<void(C
 	}));
 }
 
-void RpcSocket::on_receive_bytes(std::string_view bytes)
+void RpcSocket::on_receive_bytes(Com::Bytes &&bytes)
 {
-	while (bytes.size()) {
-		if (!try_complete_head(bytes)) {
+	Com::BytesView view(bytes);
+	while (view.size()) {
+		if (!try_complete_head(view)) {
 			return;
 		}
-		try_complete_message(bytes);
+		try_complete_message(view);
 	}
 }
 
-bool RpcSocket::try_complete_head(std::string_view &bytes)
+bool RpcSocket::try_complete_head(Com::BytesView &bytes)
 {
 	if (_head) {
 		return true;
@@ -148,7 +151,7 @@ bool RpcSocket::try_complete_head(std::string_view &bytes)
 	}
 	auto copy_size = std::min(size, bytes.size());
 	_buffer.insert(_buffer.end(), bytes.begin(), bytes.begin() + copy_size);
-	bytes = bytes.substr(copy_size);
+	bytes = bytes.subview(copy_size);
 	if (_buffer.size() == head_size) {
 		Head h;
 		if (Com::Mab::deserialize(_buffer, h)) {
@@ -161,7 +164,7 @@ bool RpcSocket::try_complete_head(std::string_view &bytes)
 	return true;
 }
 
-void RpcSocket::try_complete_message(std::string_view &bytes)
+void RpcSocket::try_complete_message(Com::BytesView &bytes)
 {
 	if (!_head || bytes.empty()) {
 		return;
@@ -170,7 +173,7 @@ void RpcSocket::try_complete_message(std::string_view &bytes)
 	auto len = h.msg_size - _buffer.size();
 	auto copy_size = std::min(len, bytes.size());
 	_buffer.insert(_buffer.end(), bytes.begin(), bytes.begin() + copy_size);
-	bytes = bytes.substr(copy_size);
+	bytes = bytes.subview(copy_size);
 	if (_buffer.size() == h.msg_size) { // message completes
 		on_receive_encoded_message(h, _buffer);
 		_head.reset();

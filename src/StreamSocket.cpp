@@ -34,11 +34,11 @@ std::error_code StreamSocket::create_stream_socket(int domain, int protocol)
 	return create_async_socket(domain, SOCK_STREAM, protocol);
 }
 
-void StreamSocket::send_bytes(std::string_view bytes)
+void StreamSocket::send_bytes(Com::Bytes &&bytes)
 {
 	{
 		std::lock_guard<std::mutex> locker(_mtx_data);
-		_data.push_back(std::string(bytes.data(), bytes.size()));
+		_data.push_back(std::move(bytes));
 	}
 	// try to write
 	_flower.add_task(bind_weak([this]()
@@ -47,7 +47,7 @@ void StreamSocket::send_bytes(std::string_view bytes)
 	}));
 }
 
-void StreamSocket::on_receive_bytes(std::function<void(std::string_view)> const &receiver)
+void StreamSocket::on_receive_bytes(std::function<void(Com::Bytes&&)> const &receiver)
 {
 	_flower.add_task(bind_weak([this, receiver]()
 	{
@@ -83,10 +83,10 @@ std::error_code StreamSocket::listen_on(std::string_view addr, int backlog)
 	return ec;
 }
 
-void StreamSocket::on_receive_bytes(std::string_view bytes)
+void StreamSocket::on_receive_bytes(Com::Bytes &&bytes)
 {
 	if (_receiver) {
-		_receiver(bytes);
+		_receiver(std::move(bytes));
 	}
 }
 
@@ -94,7 +94,7 @@ void StreamSocket::on_write()
 {
 	std::lock_guard<std::mutex> locker(_mtx_data);
 	while (!_data.empty()) {
-		auto &bytes = _data.front();
+		Com::BytesView bytes = _data.front();
 		auto count = bytes.size() - _bytes_sent;
 		if (count == 0) {
 			_data.pop_front();
@@ -102,7 +102,7 @@ void StreamSocket::on_write()
 			continue;
 		}
 		size_t written = 0;
-		auto ec = write({bytes.data() + _bytes_sent, count}, written);
+		auto ec = write(bytes.subview(_bytes_sent), written);
 		_bytes_sent += written;
 		if (!ec) {
 			continue;
@@ -119,8 +119,8 @@ void StreamSocket::on_write()
 void StreamSocket::on_read()
 {
 	const size_t BUF_SIZE = 4096;
-	std::string data;
-	std::string buf;
+	Com::Bytes data;
+	Com::Bytes buf;
 	std::error_code ec;
 	while (true) {
 		ec = read(buf, BUF_SIZE);
@@ -129,7 +129,7 @@ void StreamSocket::on_read()
 				// socket closed
 				break;
 			}
-			data += buf;
+			data.insert(data.end(), buf.begin(), buf.end());
 			continue;
 		}
 		if (ec.value() == EAGAIN) {
@@ -140,7 +140,7 @@ void StreamSocket::on_read()
 		break;
 	}
 	if (data.size()) {
-		on_receive_bytes(data);
+		on_receive_bytes(std::move(data));
 	} else if (!ec) {
 		ec = close();
 	}

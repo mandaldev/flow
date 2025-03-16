@@ -30,7 +30,7 @@ void RpcTestService::on_new_client(std::weak_ptr<RpcSocket> cnt)
 		return;
 	}
 	// 'ask' from client
-	sock->set_rpc_receiver("ask", [cnt](Com::Mab::BytesView data)
+	sock->set_rpc_receiver("ask", [cnt](Com::BytesView data)
 	{
 		std::string msg;
 		Com::Mab::deserialize(data, msg);
@@ -54,7 +54,7 @@ void RpcTestClient::on_connect(std::weak_ptr<RpcSocket> cnt)
 		return;
 	}
 	// answer from server
-	sock->set_rpc_receiver("ask", [](Com::Mab::BytesView data)
+	sock->set_rpc_receiver("ask", [](Com::BytesView data)
 	{
 		std::string msg;
 		Com::Mab::deserialize(data, msg);

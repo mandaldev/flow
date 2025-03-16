@@ -46,40 +46,40 @@ public:
 	template <typename Arg>
 	bool call(std::string_view rpc_name, Arg &&arg)
 	{
-		Com::Mab::Bytes out;
+		Com::Bytes out;
 		if (!Com::Mab::serialize(out, rpc_name)
 		|| !Com::Mab::serialize(out, std::forward<decltype(arg)>(arg))) {
 			LOG_ERROR << "failed to serialize arg";
 			return false;
 		}
-		send_rpc_call(out);
+		send_rpc_call(std::move(out));
 		return true;
 	}
 
 	/// handle different rpc calls
-	void set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::Mab::BytesView)> const &receiver);
+	void set_rpc_receiver(std::string_view rpc_name, std::function<void(Com::BytesView)> const &receiver);
 
 	/// send an encoded rpc call to peer
-	void send_rpc_call(Com::Mab::BytesView msg);
+	void send_rpc_call(Com::Bytes &&data);
 
 	/// same as `BytesView`, by bytes can be fractions, avoid bytes copyness
-	void send_rpc_call(std::vector<Com::Mab::BytesView> const &datas);
+	void send_rpc_call(std::vector<Com::Bytes> &&datas);
 
 protected:
-	void on_receive_bytes(std::string_view bytes) override;
+	void on_receive_bytes(Com::Bytes &&bytes) override;
 
 private:
-	void on_receive_encoded_message(Head const &head, Com::Mab::BytesView msg);
+	void on_receive_encoded_message(Head const &head, Com::BytesView msg);
 
-	bool try_complete_head(std::string_view &bytes);
+	bool try_complete_head(Com::BytesView &bytes);
 
-	void try_complete_message(std::string_view &bytes);
+	void try_complete_message(Com::BytesView &bytes);
 
-	std::map<std::string, std::function<void(Com::Mab::BytesView msg)>> _receivers;
+	std::map<std::string, std::function<void(Com::BytesView msg)>> _receivers;
 
 	std::optional<Head> _head;
 	// received part-message buffer (after head)
-	Com::Mab::Bytes _buffer;
+	Com::Bytes _buffer;
 };
 
 }

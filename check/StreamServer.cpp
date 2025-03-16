@@ -36,7 +36,7 @@ protected:
 
 	void on_error(std::shared_ptr<Flow::Error> err) override;
 
-	void on_receive_bytes(std::string_view bytes) override;
+	void on_receive_bytes(Com::Bytes &&bytes) override;
 
 	void on_flowing(std::shared_ptr<Flow::Error> err) override;
 
@@ -72,10 +72,10 @@ void StreamServerSocket::on_error(std::shared_ptr<Flow::Error> err)
 	}
 }
 
-void StreamServerSocket::on_receive_bytes(std::string_view bytes)
+void StreamServerSocket::on_receive_bytes(Com::Bytes &&bytes)
 {
-	LOG_DEBUG << "message from client: " << bytes;
-	send_bytes(bytes);
+	LOG_DEBUG << "message from client: " << Com::bytes_to_str(bytes);
+	send_bytes(std::move(bytes));
 }
 
 void StreamServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)

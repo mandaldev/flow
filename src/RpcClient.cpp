@@ -43,12 +43,12 @@ bool RpcClient::is_connected() const
 	return _connected;
 }
 
-void RpcClient::request(Com::Mab::Bytes data)
+void RpcClient::request(Com::Bytes data)
 {
 	_flower.add_task([this, data = std::move(data)]() mutable
 	{
 		if (is_connected()) {
-			_sock->send_rpc_call(data);
+			_sock->send_rpc_call(std::move(data));
 			return;
 		}
 		_requests.push_back(std::move(data));
@@ -61,7 +61,7 @@ void RpcClient::flush_requests()
 		return;
 	}
 	for (auto &req : _requests) {
-		_sock->send_rpc_call(req);
+		_sock->send_rpc_call(std::move(req));
 	}
 	_requests.clear();
 }

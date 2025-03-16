@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FLOW_SRC_SOCKET_HPP_
 #define FLOW_SRC_SOCKET_HPP_
+#include <Com/BytesView.hpp>
 #include <Com/raii.hpp>
 #include <cstdint>
 #include <string>
@@ -105,9 +106,9 @@ public:
 	bool is_created() const;
 
 	/// read max `count` bytes to buf
-	std::error_code read(std::string &buf, size_t count) const;
+	std::error_code read(Com::Bytes &buf, size_t count) const;
 
-	std::error_code write(std::string_view const &bytes, size_t &writen_count) const;
+	std::error_code write(Com::BytesView bytes, size_t &writen_count) const;
 
 	std::error_code get_name(sockaddr &addr, socklen_t &addr_len) const;
 

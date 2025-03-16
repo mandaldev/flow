@@ -18,7 +18,7 @@
 #include <Com/log.hpp>
 #include <sys/socket.h>
 
-StreamClient::StreamClient(Flow::Flower &flower, std::string_view msg)
+StreamClient::StreamClient(Flow::Flower &flower, Com::Bytes msg)
 : Flow::StreamSocket(flower)
 , _msg(msg)
 {
@@ -34,13 +34,13 @@ void StreamClient::on_connect(std::error_code ec)
 		ec = get_name(addr);
 		LOG_ERROR << "client connected at: [" << addr.ip << ":" << addr.port << "]";
 
-		send_bytes(_msg);
+		send_bytes(std::move(_msg));
 	} else if (domain() == AF_LOCAL) {
 		std::string addr;
 		ec = get_name(addr);
 		LOG_ERROR << "client connected at: [" << addr << "]";
 
-		send_bytes(_msg);
+		send_bytes(std::move(_msg));
 	}
 }
 
@@ -62,9 +62,9 @@ void StreamClient::on_error(std::shared_ptr<Flow::Error> err)
 	}
 }
 
-void StreamClient::on_receive_bytes(std::string_view bytes)
+void StreamClient::on_receive_bytes(Com::Bytes &&bytes)
 {
-	LOG_DEBUG << "message from server: " << bytes;
+	LOG_DEBUG << "message from server: " << Com::bytes_to_str(bytes);
 	auto ec = close();
 	LOG_DEBUG << "closing connection: " << ec;
 }
@@ -85,7 +85,7 @@ int main(int argc, const char *argv[])
 	auto messages = cmd.get_arguments();
 	Flow::Flower flower;
 	std::string msg = messages.size() ? messages[0] : "hello!";
-	auto client = std::make_shared<StreamClient>(flower, msg);
+	auto client = std::make_shared<StreamClient>(flower, Com::str_to_bytes(msg));
 	flower.add_task([&]()
 	{
 		if (type && type.value() == "tcp") {

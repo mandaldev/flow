@@ -35,11 +35,11 @@ public:
 
 	/// send data to peer, this is *async* action, data is cached to buffers
 	/// and will be sent to peer when write event arrives.
-	void send_bytes(std::string_view bytes);
+	void send_bytes(Com::Bytes &&bytes);
 
 	/// call `receiver` on data arrives or override `on_receive_bytes(bytes)` method
 	/// to handle data sent by peer
-	void on_receive_bytes(std::function<void(std::string_view)> const &receiver);
+	void on_receive_bytes(std::function<void(Com::Bytes&&)> const &receiver);
 
 	/// create tcp socket
 	std::error_code create_tcp_socket();
@@ -55,7 +55,7 @@ public:
 
 protected:
 	/// override this to receive data
-	virtual void on_receive_bytes(std::string_view bytes);
+	virtual void on_receive_bytes(Com::Bytes &&bytes);
 
 	void on_write() override;
 
@@ -63,9 +63,9 @@ protected:
 
 private:
 	std::mutex _mtx_data;
-	std::list<std::string> _data;
+	std::list<std::vector<uint8_t>> _data;
 	size_t _bytes_sent = 0;
-	std::function<void(std::string_view)> _receiver;
+	std::function<void(Com::Bytes&&)> _receiver;
 };
 
 }
