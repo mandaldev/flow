@@ -107,6 +107,9 @@ void AsyncSocket::check_connect()
 
 void AsyncSocket::setup_client_flow()
 {
+	if (!is_created()) {
+		return;
+	}
 	Flower::Action action;
 	action.on_error = bind_weak([this](std::shared_ptr<Flow::Error> err)
 	{
