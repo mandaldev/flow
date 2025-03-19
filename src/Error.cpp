@@ -18,6 +18,14 @@
 
 namespace Flow {
 
+std::error_code get_error_code(int e)
+{
+	if (e) {
+		return std::make_error_code(std::errc(e));
+	}
+	return std::error_code();
+}
+
 ErrType Flow::Error::type() const
 {
 	return ErrType::NoError;

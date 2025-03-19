@@ -21,6 +21,8 @@
 
 namespace Flow {
 
+std::error_code get_error_code(int e = errno);
+
 enum class ErrType
 {
 	NoError,

@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FLOW_SRC_SOCKET_HPP_
 #define FLOW_SRC_SOCKET_HPP_
+#include "Error.hpp"
 #include <Com/BytesView.hpp>
 #include <Com/raii.hpp>
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
 #include <variant>
 
@@ -29,8 +29,6 @@ extern "C" {
 }
 
 namespace Flow {
-
-std::error_code get_error_code(int e = errno);
 
 struct IPv4Addr
 {

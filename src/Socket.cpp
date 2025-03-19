@@ -28,14 +28,6 @@ extern "C" {
 
 namespace Flow {
 
-std::error_code get_error_code(int e)
-{
-	if (e) {
-		return std::make_error_code(std::errc(e));
-	}
-	return std::error_code();
-}
-
 bool is_abstract_local_addr(std::string_view name)
 {
 	return name.size() > 1 && name[0] == 0;
