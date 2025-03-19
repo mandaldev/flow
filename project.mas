@@ -19,6 +19,7 @@
         "src/RpcSocket.cpp"
         "src/RpcService.cpp"
         "src/RpcClient.cpp"
+        "src/Timer.cpp"
       ]
 
       dep [
@@ -37,6 +38,7 @@
             "src/RpcSocket.hpp"
             "src/RpcService.hpp"
             "src/RpcClient.hpp"
+            "src/Timer.hpp"
           ]
         }
       ]
