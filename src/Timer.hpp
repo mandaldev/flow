@@ -49,8 +49,6 @@ public:
 	Timer(Timer &&) = delete;
 	Timer &operator=(Timer &&) = delete;
 
-	int timer_fd() const;
-
 	/// set timer:
 	/// `first`: first expiration
 	/// `interval`: repeated expiration after first

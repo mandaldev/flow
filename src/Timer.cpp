@@ -81,11 +81,6 @@ Timer::~Timer()
 	auto ec = destroy();
 }
 
-int Timer::timer_fd() const
-{
-	return _fd;
-}
-
 std::error_code Timer::set(std::chrono::milliseconds first, std::chrono::milliseconds interval)
 {
 	auto ec = create();
