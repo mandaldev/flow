@@ -53,6 +53,7 @@ public:
 	/// `first`: first expiration
 	/// `interval`: repeated expiration after first
 	/// set both to zero to disarm this timer
+	/// #better_on_flow_thread
 	std::error_code set(std::chrono::milliseconds first = {}, std::chrono::milliseconds interval = {});
 
 	/// get timer settings:
@@ -60,7 +61,8 @@ public:
 	/// `interval`: interval set by `set`
 	std::error_code get(std::chrono::milliseconds &until, std::chrono::milliseconds &interval);
 
-	/// check this is valid timer - successfully created
+	/// check this is valid timer - successfully created.
+	/// timer will be created until it's first set
 	bool valid() const;
 
 	/// callback
