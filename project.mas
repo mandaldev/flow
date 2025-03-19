@@ -20,6 +20,7 @@
         "src/RpcService.cpp"
         "src/RpcClient.cpp"
         "src/Timer.cpp"
+        "src/Event.cpp"
       ]
 
       dep [
@@ -39,6 +40,7 @@
             "src/RpcService.hpp"
             "src/RpcClient.hpp"
             "src/Timer.hpp"
+            "src/Event.hpp"
           ]
         }
       ]
