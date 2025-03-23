@@ -53,7 +53,8 @@ std::shared_ptr<Error> Flower::run()
 	}
 
 	std::shared_ptr<Error> ret;
-	auto timeout = 0ms;
+	auto timeout = -1ms;
+	create_event();
 	while (_run) {
 		do_calls();
 
@@ -71,11 +72,12 @@ std::shared_ptr<Error> Flower::run()
 			continue;
 		}
 
-		timeout = std::min(timeout, MAX_TIMEOUT);
 		auto n = epoll_wait(_epoll, events.data(), (int)events.size(), (int)timeout.count());
 		if (n == 0) {
 			// timeout
-			timeout++;
+			if (events.empty()) {
+				timeout++;
+			}
 			continue;
 		}
 
@@ -91,7 +93,6 @@ std::shared_ptr<Error> Flower::run()
 			}
 		}
 
-		auto last_has_events = false;
 		for (int i = 0; i < n; i++) {
 			auto e = events[i];
 			auto action = flow_action(e.data.fd);
@@ -108,7 +109,6 @@ std::shared_ptr<Error> Flower::run()
 					err->message("flow error event occured");
 					action->on_error(err);
 				}
-				last_has_events = true;
 			}
 			if (e.events & EPOLLRDHUP) {
 				LOG_DEBUG << "epoll event RDHUP of " << e.data.fd;
@@ -116,7 +116,6 @@ std::shared_ptr<Error> Flower::run()
 				if (action && action->on_peer_close) {
 					action->on_peer_close(true);
 				}
-				last_has_events = true;
 			}
 			if (e.events & EPOLLHUP) {
 				LOG_DEBUG << "epoll event HUP of " << e.data.fd;
@@ -124,7 +123,6 @@ std::shared_ptr<Error> Flower::run()
 				if (action && action->on_peer_close) {
 					action->on_peer_close(false);
 				}
-				last_has_events = true;
 			}
 			if (e.events & EPOLLIN) {
 				LOG_DEBUG << "epoll event IN of " << e.data.fd;
@@ -132,7 +130,6 @@ std::shared_ptr<Error> Flower::run()
 				if (action && action->on_read) {
 					action->on_read();
 				}
-				last_has_events = true;
 			}
 			if (e.events & EPOLLOUT) {
 				LOG_DEBUG << "epoll event OUT of " << e.data.fd;
@@ -140,15 +137,11 @@ std::shared_ptr<Error> Flower::run()
 				if (action && action->on_write) {
 					action->on_write();
 				}
-				last_has_events = true;
 			}
 		}
-		if (last_has_events) {
-			timeout = 0ms;
-		} else {
-			timeout++;
-		}
 	}
+
+	destroy_event();
 
 	if (-1 == ::close(_epoll)) {
 		auto ec = std::make_error_code(std::errc(errno));
@@ -167,6 +160,10 @@ std::shared_ptr<Error> Flower::run()
 void Flower::quit()
 {
 	_run = false;
+	if (is_runing() && !is_flow_thread()) {
+		// awake epoll
+		post_task({});
+	}
 }
 
 bool Flower::is_runing()
@@ -174,27 +171,27 @@ bool Flower::is_runing()
 	return _epoll != -1;;
 }
 
-void Flower::add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done)
+void Flower::add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done)
 {
 	if (is_flow_thread()) {
-		do_add_flow(fd, action, std::move(done));
+		do_add_flow(fd, action, done);
 		return;
 	}
-	std::lock_guard<std::mutex> locker(_mtx);
-	_calls.push_back([=](){
-		do_add_flow(fd, action, std::move(done));
+	post_task([=]()
+	{
+		do_add_flow(fd, action, done);
 	});
 }
 
-void Flower::remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done)
+void Flower::remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> const &done)
 {
 	if (is_flow_thread()) {
-		do_remove_flow(fd, std::move(done));
+		do_remove_flow(fd, done);
 		return;
 	}
-	std::lock_guard<std::mutex> locker(_mtx);
-	_calls.push_back([=](){
-		do_remove_flow(fd, std::move(done));
+	post_task([=]()
+	{
+		do_remove_flow(fd, done);
 	});
 }
 
@@ -204,24 +201,30 @@ bool Flower::has_flow(int fd)
 	return _listeners.count(fd);
 }
 
-void Flower::add_task(std::function<void()> task)
+void Flower::add_task(std::function<void()> const &task)
 {
 	if (is_flow_thread()) {
-		do_post_task(std::move(task));
+		do_post_task(task);
 		return;
 	}
 
-	post_task(std::move(task));
+	post_task(task);
 }
-void Flower::post_task(std::function<void()> task)
+void Flower::post_task(std::function<void()> const &task)
 {
 	std::lock_guard<std::mutex> locker(_mtx);
 	_calls.push_back([=](){
-		do_post_task(std::move(task));
+		do_post_task(task);
 	});
+	if (_event) {
+		auto ec = _event->emit();
+		if (ec) {
+			LOG_ERROR << "error while emit event: " << ec.message();
+		}
+	}
 }
 
-void Flower::do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done)
+void Flower::do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done)
 {
 	auto err = std::make_shared<AddFlowFailedError>();
 	err->flow(fd);
@@ -262,7 +265,7 @@ void Flower::do_add_flow(int fd, Action const &action, std::function<void(std::s
 	}
 }
 
-void Flower::do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done)
+void Flower::do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> const &done)
 {
 	auto err = std::make_shared<RemoveFlowFailedError>();
 	err->flow(fd);
@@ -290,7 +293,7 @@ void Flower::do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> 
 	}
 }
 
-void Flower::do_post_task(std::function<void()> task)
+void Flower::do_post_task(std::function<void()> const &task)
 {
 	if (task) {
 		task();
@@ -310,6 +313,37 @@ void Flower::do_calls()
 		}
 		call();
 	}
+}
+
+void Flower::create_event()
+{
+	auto event = std::make_shared<Event>(*this);
+	auto ec = event->create();
+	if (ec) {
+		LOG_ERROR << "failed to create epoll awake event: " << ec.message();
+		return;
+	}
+	event->on_event([](size_t count)
+	{
+		LOG_DEBUG << "awake by event";
+	});
+	std::lock_guard<std::mutex> locker(_mtx);
+	_event = event;
+}
+
+void Flower::destroy_event()
+{
+	std::shared_ptr<Event> event;
+	{
+		std::lock_guard<std::mutex> locker(_mtx);
+		event = _event;
+		_event.reset();
+	}
+	if (!event) {
+		return;
+	}
+	[[maybe_unused]]
+	auto ec = event->destroy();
 }
 
 std::shared_ptr<Flower::Action> Flower::flow_action(int fd)

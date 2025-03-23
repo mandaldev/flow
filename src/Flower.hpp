@@ -16,6 +16,7 @@
 #ifndef FLOW_SRC_FLOWER_HPP_
 #define FLOW_SRC_FLOWER_HPP_
 #include "Error.hpp"
+#include "Event.hpp"
 #include <Com/raii.hpp>
 #include <atomic>
 #include <functional>
@@ -55,26 +56,30 @@ public:
 	bool is_runing();
 
 	/// #async
-	void add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done);
+	void add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done);
 
 	/// #async
-	void remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done);
+	void remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> const &done);
 
 	bool has_flow(int fd);
 
 	/// if current is not flow thread, same as `post_task`
-	void add_task(std::function<void()> task);
+	void add_task(std::function<void()> const &task);
 
-	void post_task(std::function<void()> task);
+	void post_task(std::function<void()> const &task);
 
 private:
-	void do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> done);
+	void do_add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done);
 
-	void do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> done);
+	void do_remove_flow(int fd, std::function<void(std::shared_ptr<Error>)> const &done);
 
-	void do_post_task(std::function<void()> task);
+	void do_post_task(std::function<void()> const &task);
 
 	void do_calls();
+
+	void create_event();
+
+	void destroy_event();
 
 	std::shared_ptr<Action> flow_action(int fd);
 
@@ -82,6 +87,7 @@ private:
 
 	std::mutex _mtx;
 	std::vector<std::function<void()>> _calls;
+	std::shared_ptr<Event> _event;
 
 	/// which flower is runing on 'current' thred
 	static thread_local Flower const *_bound_flower;
