@@ -15,11 +15,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FLOW_SRC_TIMER_HPP
 #define FLOW_SRC_TIMER_HPP
-#include "Flower.hpp"
 #include <Com/memory.hpp>
+#include <Com/raii.hpp>
 #include <chrono>
+#include <system_error>
 
 namespace Flow {
+
+class Flower;
 
 class Timer
 : Com::Unique
@@ -64,6 +67,8 @@ public:
 	/// check this is valid timer - successfully created.
 	/// timer will be created until it's first set
 	bool valid() const;
+
+	bool flowing() const;
 
 	/// callback
 	void on_timer(std::function<void(size_t count)> const &fn);

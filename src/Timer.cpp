@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Timer.hpp"
 #include "Error.hpp"
+#include "Flower.hpp"
 #include <Com/log.hpp>
 #include <cassert>
 #include <ctime>
@@ -152,9 +153,14 @@ bool Timer::valid() const
 	return _fd != -1;
 }
 
+bool Timer::flowing() const
+{
+	return valid() && _flower.has_flow(_fd);
+}
+
 void Timer::on_timer(std::function<void(size_t count)> const &fn)
 {
-	_flower.add_task(bind_weak([this, fn]()
+	_flower.post_task(bind_weak([this, fn]()
 	{
 		_on_timer = fn;
 	}));

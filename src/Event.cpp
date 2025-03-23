@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Event.hpp"
+#include "Flower.hpp"
 #include <Com/log.hpp>
 
 extern "C" {
@@ -57,9 +58,14 @@ bool Event::valid() const
 	return _fd != -1;
 }
 
+bool Event::flowing() const
+{
+	return valid() && _flower.has_flow(_fd);
+}
+
 void Event::on_event(std::function<void(size_t count)> const &fn)
 {
-	_flower.add_task(bind_weak([this, fn]()
+	_flower.post_task(bind_weak([this, fn]()
 	{
 		_on_event = fn;
 	}));

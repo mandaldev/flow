@@ -15,10 +15,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FLOW_SRC_EVENT_HPP
 #define FLOW_SRC_EVENT_HPP
-#include "Flower.hpp"
 #include <Com/memory.hpp>
+#include <Com/raii.hpp>
+#include <system_error>
 
 namespace Flow {
+
+class Flower;
 
 class Event
 : Com::Unique
@@ -39,6 +42,8 @@ public:
 
 	/// check this is valid event - successfully created.
 	bool valid() const;
+
+	bool flowing() const;
 
 	/// callback
 	void on_event(std::function<void(size_t count)> const &fn);
