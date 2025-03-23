@@ -23,7 +23,7 @@ namespace Flow {
 
 class Timer
 : Com::Unique
-, Com::EnableBindWeak<Timer>
+, public Com::EnableBindWeak<Timer>
 {
 public:
 	enum Clock {

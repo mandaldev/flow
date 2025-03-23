@@ -22,7 +22,7 @@ namespace Flow {
 
 class Event
 : Com::Unique
-, Com::EnableBindWeak<Event>
+, public Com::EnableBindWeak<Event>
 {
 public:
 	Event(Flower &flower);
