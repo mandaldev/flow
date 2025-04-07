@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "StreamMessageSocket.hpp"
 #include "StreamSocket.hpp"
+#include <Com/BytesView.hpp>
 #include <Com/log.hpp>
 #include <cstdint>
 
@@ -23,6 +24,18 @@ namespace Flow {
 StreamMessageSocket::StreamMessageSocket(Flower &flower)
 : StreamSocket(flower)
 {
+}
+
+void StreamMessageSocket::send_message(Com::Bytes &&msg)
+{
+	if (msg.size() == 0) {
+		LOG_WARN << "zero size message, ignored!";
+		return;
+	}
+	auto size = Com::Bytes(sizeof(_msg_size), 0);
+	*(uint32_t*)size.data() = (uint32_t)msg.size();
+	send_bytes(std::move(size));
+	send_bytes(std::move(msg));
 }
 
 void StreamMessageSocket::max_message_size(uint32_t size)
@@ -75,10 +88,10 @@ bool StreamMessageSocket::try_complete_message_size(Com::BytesView &bytes)
 	_buffer.insert(_buffer.end(), bytes.begin(), bytes.begin() + copy_size);
 	bytes = bytes.subview(copy_size);
 	if (_buffer.size() == uint_size) {
-		_msg_size = *(decltype(_msg_size)*)_buffer.data();
+		_msg_size = *(uint32_t*)_buffer.data();
 		_buffer.clear();
 		if (!_msg_size) {
-			LOG_WARN << "received a zero size packet, ignored!";
+			LOG_WARN << "received a zero size message, ignored!";
 		}
 	}
 	return true;

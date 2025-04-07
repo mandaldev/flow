@@ -23,13 +23,17 @@
 
 namespace Flow {
 
+/// socket for streamed message
 class StreamMessageSocket
 : public StreamSocket
 {
 public:
 	explicit StreamMessageSocket(Flower &flower);
 
-	/// add callback for receiving packet
+	/// send message to peer
+	void send_message(Com::Bytes &&msg);
+
+	/// add callback for receiving message
 	void on_receive_message(std::function<void(Com::BytesView)> const &receiver);
 
 	/// set max message size (in bytes), if meet one in or out message which has larger
@@ -41,7 +45,7 @@ public:
 	uint32_t max_message_size() const;
 
 protected:
-	/// override this to receive packet instead of using callback
+	/// override this to receive message instead of using callback
 	virtual void on_receive_message(Com::BytesView msg);
 
 private:
@@ -56,7 +60,7 @@ private:
 
 	std::atomic_uint32_t _max_msg_size {5u * (1u << 20)};
 	uint32_t _msg_size = 0;
-	// received part of uint32_t or packet buffer
+	// received part of uint32_t or message buffer
 	Com::Bytes _buffer;
 
 	std::function<void(Com::BytesView)> _receiver;
