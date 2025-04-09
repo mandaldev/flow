@@ -17,12 +17,15 @@
 #define FLOW_SRC_RPCREQUEST_HPP
 #include "Rpc.hpp"
 #include <Com/BytesView.hpp>
-#include <Com/Mab/serialize.hpp>
 #include <cstdint>
 #include <string>
 
 namespace Flow {
 
+/// 一般情况下 `args` 可能比较大，为了避免在发送请求和接受请求的过程中不必要的拷贝，
+/// 提供两个版本的参数变量，可修改的版本用于发送请求，不可变的用于接受请求。
+/// 发送请求的时候，整个请求序列化成两个Bytes，一个是除args的其他所有数据，另一个是由用户序列化
+/// 的args，二者顺序必须正确
 class RpcRequest
 {
 public:
@@ -49,16 +52,21 @@ public:
 
 	void method(std::string const &value);
 
-	Com::Bytes const &args() const;
-
-	void args(Com::Bytes &&value);
-
 	RpcCodecChain const &args_format() const;
 
 	void args_format(RpcCodecChain const &value);
 
-	bool serialize_to_mab(Com::Bytes &out) const;
+	Com::Bytes &args();
 
+	Com::BytesView const_args() const;
+
+	void const_args(Com::BytesView value);
+
+	/// to avoid copy, `args` is not serilized to `out`
+	bool serialize_to_mab_except_args(Com::Bytes &out) const;
+
+	/// 反序列化除args的其他所有数据后，剩下的Bytes被认为是args，之后可以通过
+	/// `const_args` 访问。
 	bool deserialize_from_mab(Com::BytesView in, size_t &pos);
 
 private:
@@ -68,25 +76,10 @@ private:
 	std::string _interface;
 	std::string _method;
 	RpcCodecChain _args_format;
+
 	Com::Bytes _args;
+	Com::BytesView _const_args = std::string_view();
 };
 
 }
-
-namespace Com::Mab {
-
-template <>
-inline bool serialize<Flow::RpcRequest>(Bytes &out, Flow::RpcRequest const &v)
-{
-	return v.serialize_to_mab(out);
-}
-
-template <>
-inline bool deserialize<Flow::RpcRequest>(BytesView in, size_t &pos, Flow::RpcRequest &v)
-{
-	return v.deserialize_from_mab(in, pos);
-}
-
-}
-
 #endif

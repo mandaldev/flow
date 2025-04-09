@@ -19,9 +19,11 @@
 #include <Com/BytesView.hpp>
 #include <Com/Mab/serialize.hpp>
 #include <cstdint>
+#include <string_view>
 
 namespace Flow {
 
+/// returns的序列化设计同RpcRequest的args。
 class RpcResponse
 {
 public:
@@ -40,15 +42,17 @@ public:
 
 	void status(RpcStatusCode const &value);
 
-	Com::Bytes const &returns() const;
-
-	void returns(Com::Bytes &&value);
-
 	RpcCodecChain const &returns_format() const;
 
 	void returns_format(RpcCodecChain const &value);
 
-	bool serialize_to_mab(Com::Bytes &out) const;
+	Com::BytesView const_returns() const;
+
+	void const_returns(Com::BytesView value);
+
+	Com::Bytes &returns();
+
+	bool serialize_to_mab_except_returns(Com::Bytes &out) const;
 
 	bool deserialize_from_mab(Com::BytesView in, size_t &pos);
 
@@ -57,7 +61,9 @@ private:
 	uint64_t _unique_id = 0;
 	RpcStatusCode _status;
 	RpcCodecChain _returns_format;
+
 	Com::Bytes _returns;
+	Com::BytesView _const_returns = std::string_view();
 };
 
 }
@@ -67,7 +73,7 @@ namespace Com::Mab {
 template <>
 inline bool serialize<Flow::RpcResponse>(Bytes &out, Flow::RpcResponse const &v)
 {
-	return v.serialize_to_mab(out);
+	return v.serialize_to_mab_except_returns(out);
 }
 
 template <>

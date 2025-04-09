@@ -74,16 +74,6 @@ void RpcRequest::method(std::string const &value)
 	_method = value;
 }
 
-Com::Bytes const &RpcRequest::args() const
-{
-	return _args;
-}
-
-void RpcRequest::args(Com::Bytes &&value)
-{
-	_args = std::move(value);
-}
-
 RpcCodecChain const &RpcRequest::args_format() const
 {
 	return _args_format;
@@ -94,7 +84,22 @@ void RpcRequest::args_format(RpcCodecChain const &value)
 	_args_format = value;
 }
 
-bool RpcRequest::serialize_to_mab(Com::Bytes &out) const
+Com::Bytes &RpcRequest::args()
+{
+	return _args;
+}
+
+Com::BytesView RpcRequest::const_args() const
+{
+	return _const_args;
+}
+
+void RpcRequest::const_args(Com::BytesView value)
+{
+	_const_args = value;
+}
+
+bool RpcRequest::serialize_to_mab_except_args(Com::Bytes &out) const
 {
 	return Com::Mab::serialize_kvs(out,
 		"version", _version,
@@ -102,22 +107,24 @@ bool RpcRequest::serialize_to_mab(Com::Bytes &out) const
 		"timeout", _timeout,
 		"interface", _interface,
 		"method", _method,
-		"args_format", _args_format,
-		"args", _args
+		"args_format", _args_format
 	);
 }
 
 bool RpcRequest::deserialize_from_mab(Com::BytesView in, size_t &pos)
 {
-	return Com::Mab::deserialize_kvs(in, pos,
+	auto ret = Com::Mab::deserialize_kvs(in, pos,
 		"version", _version,
 		"unique_id", _unique_id,
 		"timeout", _timeout,
 		"interface", _interface,
 		"method", _method,
-		"args_format", _args_format,
-		"args", _args
+		"args_format", _args_format
 	);
+	if (ret) {
+		_const_args = in.subview(pos);
+	}
+	return ret;
 }
 
 }

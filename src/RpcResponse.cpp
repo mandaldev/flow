@@ -52,16 +52,6 @@ void RpcResponse::status(RpcStatusCode const &value)
 	_status = value;
 }
 
-Com::Bytes const &RpcResponse::returns() const
-{
-	return _returns;
-}
-
-void RpcResponse::returns(Com::Bytes &&value)
-{
-	_returns = std::move(value);
-}
-
 RpcCodecChain const &RpcResponse::returns_format() const
 {
 	return _returns_format;
@@ -72,26 +62,43 @@ void RpcResponse::returns_format(RpcCodecChain const &value)
 	_returns_format = value;
 }
 
-bool RpcResponse::serialize_to_mab(Com::Bytes &out) const
+Com::BytesView RpcResponse::const_returns() const
+{
+	return _const_returns;
+}
+
+void RpcResponse::const_returns(Com::BytesView value)
+{
+	_const_returns = value;
+}
+
+Com::Bytes &RpcResponse::returns()
+{
+	return _returns;
+}
+
+bool RpcResponse::serialize_to_mab_except_returns(Com::Bytes &out) const
 {
 	return Com::Mab::serialize_kvs(out,
 		"version", _version,
 		"unique_id", _unique_id,
 		"status", _status,
-		"returns_format", _returns_format,
-		"returns", _returns
+		"returns_format", _returns_format
 	);
 }
 
 bool RpcResponse::deserialize_from_mab(Com::BytesView in, size_t &pos)
 {
-	return Com::Mab::deserialize_kvs(in, pos,
+	auto ret = Com::Mab::deserialize_kvs(in, pos,
 		"version", _version,
 		"unique_id", _unique_id,
 		"status", _status,
-		"returns_format", _returns_format,
-		"returns", _returns
+		"returns_format", _returns_format
 	);
+	if (ret) {
+		_const_returns = in.subview(pos);
+	}
+	return ret;
 }
 
 }
