@@ -33,11 +33,11 @@ enum class RpcCodec
 	/// Com::Mab binary format: any data type -> bytes
 	Mab,
 	/// Com::Mas text format: any data type -> string
-	Mas,
+	// Mas,
 	/// JSON text format: any data type -> string
-	Json,
+	// Json,
 	/// zstd compressed: bytes or string -> bytes
-	Zstd
+	// Zstd
 };
 
 /// status code of rpc response
