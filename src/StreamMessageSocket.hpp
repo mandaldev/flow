@@ -33,6 +33,8 @@ public:
 	/// send message to peer
 	void send_message(Com::Bytes &&msg);
 
+	void send_message(std::vector<Com::Bytes> &&msg);
+
 	/// add callback for receiving message
 	void on_receive_message(std::function<void(Com::BytesView)> const &receiver);
 

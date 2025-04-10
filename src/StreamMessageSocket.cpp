@@ -18,6 +18,7 @@
 #include <Com/BytesView.hpp>
 #include <Com/log.hpp>
 #include <cstdint>
+#include <vector>
 
 namespace Flow {
 
@@ -28,14 +29,27 @@ StreamMessageSocket::StreamMessageSocket(Flower &flower)
 
 void StreamMessageSocket::send_message(Com::Bytes &&msg)
 {
-	if (msg.size() == 0) {
+	auto tmp = std::vector<Com::Bytes>();
+	tmp.emplace_back(std::move(msg));
+	send_message(std::move(tmp));
+}
+
+void StreamMessageSocket::send_message(std::vector<Com::Bytes> &&msg)
+{
+	size_t size = 0;
+	for (auto const &bytes : msg) {
+		size += bytes.size();
+	}
+	if (size == 0) {
 		LOG_WARN << "zero size message, ignored!";
 		return;
 	}
-	auto size = Com::Bytes(sizeof(_msg_size), 0);
-	*(uint32_t*)size.data() = (uint32_t)msg.size();
-	send_bytes(std::move(size));
-	send_bytes(std::move(msg));
+	auto head = Com::Bytes(sizeof(_msg_size), 0);
+	*(uint32_t*)head.data() = (uint32_t)msg.size();
+	send_bytes(std::move(head));
+	for (auto &bytes : msg) {
+		send_bytes(std::move(bytes));
+	}
 }
 
 void StreamMessageSocket::max_message_size(uint32_t size)
