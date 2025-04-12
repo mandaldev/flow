@@ -67,7 +67,7 @@ public:
 
 	/// 反序列化除args的其他所有数据后，剩下的Bytes被认为是args，之后可以通过
 	/// `const_args` 访问。
-	bool deserialize_from_mab(Com::BytesView in, size_t &pos);
+	bool deserialize_from_mab(Com::BytesView in);
 
 private:
 	uint32_t _version = 0;
