@@ -52,8 +52,11 @@ enum class RpcStatusCode
 	BadMethod,
 	/// not supported rpc version
 	BadVersion,
-	/// server timeout (spent too long for processing request)
-	Timeout,
+	/// request timeout if pending too long
+	RequestTimeout,
+	/// response timeout if server spent too mush time since
+	/// client sent out request
+	ResponseTimeout,
 };
 
 /// codecs those origin data has been encoded by.
