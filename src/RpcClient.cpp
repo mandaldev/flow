@@ -14,7 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "RpcClient.hpp"
+#include "Rpc.hpp"
+#include "RpcRequest.hpp"
+#include "RpcResponse.hpp"
+#include "StreamMessageSocket.hpp"
+#include "Timer.hpp"
+#include <Com/BytesView.hpp>
 #include <Com/log.hpp>
+#include <cstdint>
+#include <memory>
+#include <system_error>
+
+using namespace std::chrono_literals;
 
 namespace Flow {
 
@@ -23,52 +34,171 @@ RpcClient::RpcClient(Flower &flower)
 {
 }
 
-void RpcClient::init(Config const &conf)
+void RpcClient::init(Config const &conf, std::function<void(std::error_code)> const &on_init_failed)
 {
+	if (!_flower.is_flow_thread()) {
+		_flower.add_task(bind_weak([this, conf, on_init_failed]()
+		{
+			init(conf, on_init_failed);
+		}));
+		return;
+	}
+
 	_conf = conf;
-	_flower.add_task([this]()
-	{
-		_sock = std::make_shared<ClientSocket>(_flower, *this);
-		auto ec = _sock->setup(_conf.server_addr);
-		if (ec) {
-			_sock.reset();
+	_on_init_failed = on_init_failed;
+	_init_ts = Timer::get_time(Timer::Boottime);
+	_sock = std::make_shared<ClientSocket>(_flower, *this);
+	auto ec = _sock->setup(_conf.server_addr);
+	if (ec) {
+		_sock.reset();
+		if (_on_init_failed) {
+			_on_init_failed(ec);
 		}
-		// TODO
-	});
+		return;
+	}
+
+	_timer = std::make_shared<Timer>(_flower, Timer::Boottime);
+	ec = _timer->set(1000ms);
+	if (ec) {
+		LOG_ERROR << "timer failed: " << ec;
+	}
+	_timer->on_timer(bind_weak([this](size_t)
+	{
+		check_connection_timeout();
+		check_request_timeout();
+	}));
 }
 
+void RpcClient::request(RpcRequest &&req, std::function<void(RpcResponse&&)> const &done)
+{
+	req.version(rpc_version_code());
+	req.timeout((uint32_t)_conf.response_timeout.count());
+	auto shared_req = std::make_shared<Request>();
+	shared_req->req = std::move(req);
+	shared_req->emit_ts = Timer::get_time(Timer::Boottime);
+	shared_req->done = done;
+	_flower.add_task(bind_weak([this, shared_req]()
+	{
+		shared_req->req.unique_id(new_unique_id());
+		if (_connected && _sock) {
+			if (!_sock->request(*shared_req)) {
+				// sending request failed
+				return;
+			}
+		}
+		_requests.insert({shared_req->req.unique_id(), std::move(*shared_req)});
+	}));
+}
 
 bool RpcClient::is_connected() const
 {
 	return _connected;
 }
 
-void RpcClient::request(Com::Bytes data)
-{
-	_flower.add_task([this, data = std::move(data)]() mutable
-	{
-		if (is_connected()) {
-			_sock->send_rpc_call(std::move(data));
-			return;
-		}
-		_requests.push_back(std::move(data));
-	});
-}
-
 void RpcClient::flush_requests()
 {
-	if (!_sock) {
+	check_request_timeout();
+	if (!_sock || !_connected) {
 		return;
 	}
-	for (auto &req : _requests) {
-		_sock->send_rpc_call(std::move(req));
+	for (auto it = _requests.begin(); it != _requests.end(); ) {
+		auto &[uid, req] = *it;
+		if (req.is_sent()) {
+			continue;;
+		}
+		// sending request failed
+		if (_sock->request(req)) {
+			it++;
+		} else {
+			it = _requests.erase(it);
+		}
 	}
-	_requests.clear();
 }
 
+uint64_t RpcClient::new_unique_id()
+{
+	assert(_flower.is_flow_thread());
+	_unique_id += 1;
+	return _unique_id ? _unique_id : new_unique_id();
+}
+
+void RpcClient::check_request_timeout()
+{
+	auto now = Timer::get_time(Timer::Boottime);
+	for (auto it = _requests.begin(); it != _requests.end(); ) {
+		auto erase = false;
+		auto &[uid, req] = *it;
+		if (req.is_sent()) {
+			// check response timeout
+			if (now - req.sent_ts > _conf.response_timeout) {
+				if (req.done) {
+					RpcResponse res;
+					res.unique_id(uid);
+					res.status(RpcStatusCode::ResponseTimeout);
+					req.done(std::move(res));
+				}
+				LOG_WARN << "response timeout: " << uid;
+				erase = true;
+			}
+		} else if (now - req.emit_ts > _conf.request_timeout) {
+			// check request timeout
+			if (req.done) {
+				RpcResponse res;
+				res.unique_id(uid);
+				res.status(RpcStatusCode::RequestTimeout);
+				req.done(std::move(res));
+			}
+			LOG_WARN << "request timeout: " << uid;
+			erase = true;
+		}
+		if (erase) {
+			it = _requests.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+void RpcClient::check_connection_timeout()
+{
+	if (!_sock) {
+		// failed to create socket, shutdown client
+		[[maybe_unused]]
+		auto ec = _timer->set();
+		return;
+	}
+	if (_connected) {
+		return;
+	}
+	auto now = Timer::get_time(Timer::Boottime);
+	if (now - _init_ts > _conf.connection_timeout) {
+		if (_on_init_failed) {
+			_on_init_failed(std::make_error_code(std::errc::timed_out));
+		}
+		[[maybe_unused]]
+		auto ec = _timer->set();
+	}
+}
+
+void RpcClient::on_response(Com::BytesView message)
+{
+	RpcResponse res;
+	res.deserialize_from_mab(message);
+	auto it = _requests.find(res.unique_id());
+	if (it == _requests.end()) {
+		LOG_WARN << "received a no-owner response: " << res.unique_id();
+		return;
+	}
+	auto done = it->second.done;
+	_requests.erase(it);
+
+	if (done) {
+		done(std::move(res));
+	}
+}
 
 RpcClient::ClientSocket::ClientSocket(Flower &flower, RpcClient &owner)
-: RpcSocket(flower)
+: StreamMessageSocket(flower)
 , _owner(owner)
 {
 }
@@ -110,6 +240,23 @@ std::error_code RpcClient::ClientSocket::setup(std::variant<IPv4Addr, std::strin
 	return ec;
 }
 
+bool RpcClient::ClientSocket::request(Request &req)
+{
+	std::vector<Com::Bytes> msg(2);
+	if (req.req.serialize_to_mab_except_args(msg[0])) {
+		req.sent_ts = Timer::get_time(Timer::Boottime);
+		msg[1] = std::move(req.req.args());
+		send_message(std::move(msg));
+		return true;
+	} else {
+		LOG_ERROR << "failed to serialize request: " << req.req.unique_id();
+		if (req.done) {
+			req.done({});
+		}
+		return false;
+	}
+}
+
 void RpcClient::ClientSocket::on_close()
 {
 	LOG_INFO << "Client socket closed: '" << format_addr(_addr) << "'";
@@ -141,8 +288,12 @@ void RpcClient::ClientSocket::on_connect(std::error_code ec)
 		return;
 	}
 	_owner._connected = true;
-	_owner.on_connect(_owner._sock);
 	_owner.flush_requests();
+}
+
+void RpcClient::ClientSocket::on_receive_message(Com::BytesView msg)
+{
+	_owner.on_response(msg);
 }
 
 }
