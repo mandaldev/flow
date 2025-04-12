@@ -29,7 +29,9 @@ namespace Flow {
 class RpcRequest
 {
 public:
-	/// only version will be filled in constructor
+	/// only these fields will be filled in constructor
+	/// - version: current version code
+	/// - codec chain: `{ Mab }`
 	RpcRequest();
 
 	uint32_t version() const;
@@ -44,11 +46,11 @@ public:
 
 	void timeout(uint32_t value);
 
-	std::string interface() const;
+	std::string const &interface() const;
 
 	void interface(std::string const &value);
 
-	std::string method() const;
+	std::string const &method() const;
 
 	void method(std::string const &value);
 
@@ -75,7 +77,7 @@ private:
 	uint32_t _timeout = 0;
 	std::string _interface;
 	std::string _method;
-	RpcCodecChain _args_format;
+	RpcCodecChain _args_format = { RpcCodec::Mab };
 
 	Com::Bytes _args;
 	Com::BytesView _const_args = std::string_view();

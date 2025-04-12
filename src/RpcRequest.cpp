@@ -54,7 +54,7 @@ void RpcRequest::timeout(uint32_t value)
 	_timeout = value;
 }
 
-std::string RpcRequest::interface() const
+std::string const &RpcRequest::interface() const
 {
 	return _interface;
 }
@@ -64,7 +64,7 @@ void RpcRequest::interface(std::string const &value)
 	_interface = value;
 }
 
-std::string RpcRequest::method() const
+std::string const &RpcRequest::method() const
 {
 	return _method;
 }

@@ -27,7 +27,9 @@ namespace Flow {
 class RpcResponse
 {
 public:
-	/// only version will be filled in constructor
+	/// only these fields will be filled in constructor
+	/// - version: current version code
+	/// - codec chain: `{ Mab }`
 	RpcResponse();
 
 	uint32_t version() const;
@@ -61,7 +63,7 @@ private:
 	uint32_t _version = 0;
 	uint64_t _unique_id = 0;
 	RpcStatusCode _status;
-	RpcCodecChain _returns_format;
+	RpcCodecChain _returns_format = { RpcCodec::Mab };
 
 	Com::Bytes _returns;
 	Com::BytesView _const_returns = std::string_view();
