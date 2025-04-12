@@ -15,7 +15,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef FLOW_SRC_RPCSERVICE_HPP
 #define FLOW_SRC_RPCSERVICE_HPP
-#include "RpcSocket.hpp"
+#include "RpcRequest.hpp"
+#include "RpcResponse.hpp"
+#include "StreamMessageSocket.hpp"
+#include "Timer.hpp"
+#include <Com/ThreadPool.hpp>
+#include <chrono>
+#include <cstdint>
+#include <memory>
 #include <set>
 
 namespace Flow {
@@ -24,6 +31,7 @@ namespace Flow {
 /// all public api can be called outside of Flow thread
 class RpcService
 : public Com::Unique
+, public Com::EnableBindWeak<RpcService>
 {
 public:
 	struct Config
@@ -34,15 +42,17 @@ public:
 		std::vector<std::string> _local_addrs;
 		/// clients wait queue size
 		int backlog = 100;
+		uint16_t threads = 1;
 	};
 
 	RpcService(Flower &flower);
+	~RpcService();
 
-	void init(Config const &conf);
+	void init(Config const &conf, std::function<void(size_t addr_index, std::error_code)> const &on_init_failed);
 
 protected:
-	/// this is the moment when you add rpc receivers
-	virtual void on_new_client(std::weak_ptr<RpcSocket> cnt) = 0;
+	/// request hanlder
+	virtual void on_request(RpcRequest const &req, RpcResponse &res) = 0;
 
 private:
 	/// socket that listens to an address
@@ -70,10 +80,12 @@ private:
 
 	/// socket that serving a client
 	class ServerSocket
-	: public RpcSocket
+	: public StreamMessageSocket
 	{
 	public:
 		ServerSocket(Flower &flower, RpcService &owner, std::variant<IPv4Addr, std::string> const &addr);
+
+		void check_response_timeout();
 
 	protected:
 		void on_close() override;
@@ -81,17 +93,34 @@ private:
 		void on_error(std::shared_ptr<Flow::Error> err) override;
 
 		void on_flowing(std::shared_ptr<Flow::Error> err) override;
+
+		void on_receive_message(Com::BytesView msg) override;
+
 	private:
+		struct Request
+		{
+			std::shared_ptr<RpcRequest> req;
+			std::chrono::milliseconds arrive_ts;
+			uint64_t task_id = 0;
+		};
+
+		void dispatch(RpcRequest const &req);
+
 		RpcService &_owner;
 		std::variant<IPv4Addr, std::string> _addr;
+		std::map<uint64_t, Request> _requests;
 	};
+
+	void check_response_timeout();
 
 private:
 	Config _conf;
 	Flower &_flower;
+	std::shared_ptr<Com::ThreadPool> _tp;
 
-	std::set<std::shared_ptr<AsyncSocket>> _listen_socks;
-	std::set<std::shared_ptr<AsyncSocket>> _servers;
+	std::set<std::shared_ptr<ListenSocket>> _listen_socks;
+	std::set<std::shared_ptr<ServerSocket>> _servers;
+	std::shared_ptr<Timer> _timer;
 };
 
 }

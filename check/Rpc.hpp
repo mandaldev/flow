@@ -26,10 +26,8 @@ class RpcTestService
 public:
 	RpcTestService(Flower &flower);
 
-protected:
-	void on_new_client(std::weak_ptr<RpcSocket> cnt) override;
-
 private:
+	void on_request(RpcRequest const &req, RpcResponse &res) override;
 };
 
 class RpcTestClient
@@ -37,9 +35,6 @@ class RpcTestClient
 {
 public:
 	RpcTestClient(Flower &flower);
-
-protected:
-	void on_connect(std::weak_ptr<RpcSocket> cnt) override;
 
 private:
 };

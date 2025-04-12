@@ -58,7 +58,7 @@ void RpcClient::init(Config const &conf, std::function<void(std::error_code)> co
 	}
 
 	_timer = std::make_shared<Timer>(_flower, Timer::Boottime);
-	ec = _timer->set(1000ms);
+	ec = _timer->set(1000ms, 1000ms);
 	if (ec) {
 		LOG_ERROR << "timer failed: " << ec;
 	}
@@ -69,7 +69,7 @@ void RpcClient::init(Config const &conf, std::function<void(std::error_code)> co
 	}));
 }
 
-void RpcClient::request(RpcRequest &&req, std::function<void(RpcResponse&&)> const &done)
+void RpcClient::request(RpcRequest &&req, std::function<void(RpcResponse const&)> const &done)
 {
 	req.version(rpc_version_code());
 	req.timeout((uint32_t)_conf.response_timeout.count());
@@ -135,7 +135,7 @@ void RpcClient::check_request_timeout()
 					RpcResponse res;
 					res.unique_id(uid);
 					res.status(RpcStatusCode::ResponseTimeout);
-					req.done(std::move(res));
+					req.done(res);
 				}
 				LOG_WARN << "response timeout: " << uid;
 				erase = true;
@@ -146,7 +146,7 @@ void RpcClient::check_request_timeout()
 				RpcResponse res;
 				res.unique_id(uid);
 				res.status(RpcStatusCode::RequestTimeout);
-				req.done(std::move(res));
+				req.done(res);
 			}
 			LOG_WARN << "request timeout: " << uid;
 			erase = true;
@@ -183,7 +183,11 @@ void RpcClient::check_connection_timeout()
 void RpcClient::on_response(Com::BytesView message)
 {
 	RpcResponse res;
-	res.deserialize_from_mab(message);
+	if (!res.deserialize_from_mab(message)) {
+		LOG_ERROR << "failed to deserialize response, size : " << message.size();
+		return;
+	}
+
 	auto it = _requests.find(res.unique_id());
 	if (it == _requests.end()) {
 		LOG_WARN << "received a no-owner response: " << res.unique_id();
@@ -193,7 +197,7 @@ void RpcClient::on_response(Com::BytesView message)
 	_requests.erase(it);
 
 	if (done) {
-		done(std::move(res));
+		done(res);
 	}
 }
 

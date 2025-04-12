@@ -14,32 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Rpc.hpp"
+#include <Com/BytesView.hpp>
+#include <Com/Mab/serialize.hpp>
 #include <Com/log.hpp>
-#include <future>
-#include <thread>
+#include <memory>
+#include <system_error>
 
 RpcTestService::RpcTestService(Flower &flower)
 : RpcService(flower)
 {
 }
 
-void RpcTestService::on_new_client(std::weak_ptr<RpcSocket> cnt)
+void RpcTestService::on_request(RpcRequest const &req, RpcResponse &res)
 {
-	auto sock = cnt.lock();
-	if (!sock) {
+	if (req.interface() != "TestService") {
+		res.status(RpcStatusCode::BadInterface);
 		return;
 	}
-	// 'ask' from client
-	sock->set_rpc_receiver("ask", [cnt](Com::BytesView data)
-	{
-		std::string msg;
-		Com::Mab::deserialize(data, msg);
-		LOG_INFO << "message from client: " << msg;
-		if (auto sock = cnt.lock()) {
-			msg = "hi, my code is 2025.";
-			sock->call("ask", msg);
-		}
-	});
+	if (req.method() != "ask") {
+		res.status(RpcStatusCode::BadMethod);
+		return;
+	}
+	std::string msg;
+	if (!Com::Mab::deserialize(req.const_args(), msg)) {
+		res.status(RpcStatusCode::BadArguments);
+		return;
+	}
+
+	LOG_INFO << "message from client: " << msg;
+
+	msg = "Hi, my code is 2025.";
+	Com::Mab::serialize(res.returns(), msg);
+	res.status(RpcStatusCode::Ok);
 }
 
 RpcTestClient::RpcTestClient(Flower &flower)
@@ -47,42 +53,50 @@ RpcTestClient::RpcTestClient(Flower &flower)
 {
 }
 
-void RpcTestClient::on_connect(std::weak_ptr<RpcSocket> cnt)
-{
-	auto sock = cnt.lock();
-	if (!sock) {
-		return;
-	}
-	// answer from server
-	sock->set_rpc_receiver("ask", [](Com::BytesView data)
-	{
-		std::string msg;
-		Com::Mab::deserialize(data, msg);
-		LOG_INFO << "answer from server: " << msg;
-	});
-}
-
 int main(int argc, const char *argv[])
 {
 	const auto ADDR = "flow.check.rpc_test_service";
 	Flower flower;
-	RpcTestService service(flower);
 	RpcService::Config conf;
 	conf._local_addrs.push_back(ADDR);
-	service.init(conf);
-
-	RpcTestClient client(flower);
-	auto fut = std::async(std::launch::async, [&]()
+	auto service = std::make_shared<RpcTestService>(flower);
+	service->init(conf, [&flower](size_t addr_index, std::error_code ec)
 	{
-		std::this_thread::sleep_for(std::chrono::seconds(5));
+		flower.quit();
+	});
+
+	auto client = std::make_shared<RpcTestClient>(flower);
+	{
+		// std::this_thread::sleep_for(std::chrono::seconds(5));
 		RpcClient::Config conf;
 		conf.server_addr = ADDR;
-		client.init(conf);
+		client->init(conf, [&flower](std::error_code ec)
+		{
+			flower.quit();
+		});
 
-		std::string_view msg = "hello, what's your code?";
-		client.request("ask", msg);
-	});
+		RpcRequest req;
+		req.interface("TestService");
+		req.method("ask");
+
+		std::string_view msg = "Hello, what's your code?";
+		Com::Mab::serialize(req.args(), msg);
+		client->request(std::move(req), [](RpcResponse const &res)
+		{
+			if (res.status() != RpcStatusCode::Ok) {
+				LOG_ERROR << "response is not ok: " << (int)res.status();
+				return;
+			}
+			std::string msg;
+			if (Com::Mab::deserialize(res.const_returns(), msg)) {
+				LOG_INFO << "answer from server: " << msg;
+			} else {
+				LOG_ERROR << "invalid returns format of response";
+			}
+
+		});
+	}
+
 	flower.run();
-	fut.get();
 	return 0;
 }

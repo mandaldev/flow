@@ -57,7 +57,7 @@ public:
 	void init(Config const &conf, std::function<void(std::error_code)> const &on_init_failed);
 
 	/// send a rpc request, call `done` once response is received
-	void request(RpcRequest &&req, std::function<void(RpcResponse&&)> const &done);
+	void request(RpcRequest &&req, std::function<void(RpcResponse const&)> const &done);
 
 	bool is_connected() const;
 
@@ -69,7 +69,7 @@ private:
 		std::chrono::milliseconds emit_ts;
 		/// when this request is sent to peer
 		std::chrono::milliseconds sent_ts;
-		std::function<void(RpcResponse&&)> done;
+		std::function<void(RpcResponse const&)> done;
 
 		bool is_emitted() const { return emit_ts.count(); }
 		bool is_sent() const { return sent_ts.count(); }
