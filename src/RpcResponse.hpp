@@ -34,6 +34,7 @@ public:
 
 	void version(uint32_t value);
 
+	/// unique id is 0 if this response is invalid (means error occured)
 	uint64_t unique_id() const;
 
 	void unique_id(uint64_t value);
@@ -54,7 +55,7 @@ public:
 
 	bool serialize_to_mab_except_returns(Com::Bytes &out) const;
 
-	bool deserialize_from_mab(Com::BytesView in, size_t &pos);
+	bool deserialize_from_mab(Com::BytesView in);
 
 private:
 	uint32_t _version = 0;
@@ -65,22 +66,6 @@ private:
 	Com::Bytes _returns;
 	Com::BytesView _const_returns = std::string_view();
 };
-
-}
-
-namespace Com::Mab {
-
-template <>
-inline bool serialize<Flow::RpcResponse>(Bytes &out, Flow::RpcResponse const &v)
-{
-	return v.serialize_to_mab_except_returns(out);
-}
-
-template <>
-inline bool deserialize<Flow::RpcResponse>(BytesView in, size_t &pos, Flow::RpcResponse &v)
-{
-	return v.deserialize_from_mab(in, pos);
-}
 
 }
 #endif

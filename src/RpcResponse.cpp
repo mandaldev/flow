@@ -87,8 +87,9 @@ bool RpcResponse::serialize_to_mab_except_returns(Com::Bytes &out) const
 	);
 }
 
-bool RpcResponse::deserialize_from_mab(Com::BytesView in, size_t &pos)
+bool RpcResponse::deserialize_from_mab(Com::BytesView in)
 {
+	size_t pos = 0;
 	auto ret = Com::Mab::deserialize_kvs(in, pos,
 		"version", _version,
 		"unique_id", _unique_id,
