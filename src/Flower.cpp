@@ -171,6 +171,11 @@ bool Flower::is_runing()
 	return _epoll != -1;;
 }
 
+bool Flower::is_flow_thread()
+{
+	return this == _bound_flower;
+}
+
 void Flower::add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done)
 {
 	if (is_flow_thread()) {
@@ -354,11 +359,6 @@ std::shared_ptr<Flower::Action> Flower::flow_action(int fd)
 		return it->second;
 	}
 	return {};
-}
-
-bool Flower::is_flow_thread()
-{
-	return this == _bound_flower;
 }
 
 }

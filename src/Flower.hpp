@@ -55,6 +55,8 @@ public:
 
 	bool is_runing();
 
+	bool is_flow_thread();
+
 	/// #async
 	void add_flow(int fd, Action const &action, std::function<void(std::shared_ptr<Error>)> const &done);
 
@@ -82,8 +84,6 @@ private:
 	void destroy_event();
 
 	std::shared_ptr<Action> flow_action(int fd);
-
-	bool is_flow_thread();
 
 	std::mutex _mtx;
 	std::vector<std::function<void()>> _calls;
