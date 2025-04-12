@@ -57,6 +57,8 @@ enum class RpcStatusCode
 	/// response timeout if server spent too mush time since
 	/// client sent out request
 	ResponseTimeout,
+	/// bad arguments
+	BadArguments,
 };
 
 /// codecs those origin data has been encoded by.
