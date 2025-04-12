@@ -21,6 +21,7 @@
 #include "Timer.hpp"
 #include <Com/BytesView.hpp>
 #include <Com/memory.hpp>
+#include <Com/raii.hpp>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -31,7 +32,8 @@ namespace Flow {
 /// RPC Client class
 /// all public api can be called outside of Flow thread
 class RpcClient
-: public Com::EnableBindWeak<RpcClient>
+: public Com::Unique
+, public Com::EnableBindWeak<RpcClient>
 {
 public:
 	struct Config
