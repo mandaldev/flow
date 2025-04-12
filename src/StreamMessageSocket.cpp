@@ -45,7 +45,7 @@ void StreamMessageSocket::send_message(std::vector<Com::Bytes> &&msg)
 		return;
 	}
 	auto head = Com::Bytes(sizeof(_msg_size), 0);
-	*(uint32_t*)head.data() = (uint32_t)msg.size();
+	*(uint32_t*)head.data() = (uint32_t)size;
 	send_bytes(std::move(head));
 	for (auto &bytes : msg) {
 		send_bytes(std::move(bytes));
