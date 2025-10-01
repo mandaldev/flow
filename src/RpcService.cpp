@@ -248,7 +248,7 @@ void RpcService::ServerSocket::check_response_timeout()
 void RpcService::ServerSocket::dispatch(RpcRequest const &req)
 {
 	auto res = std::make_shared<RpcResponse>();
-	_owner.on_request(req, *res);
+	_owner.on_request(*this, req, *res);
 
 	res->unique_id(req.unique_id());
 	_flower.add_task(bind_weak([this, res]

@@ -25,7 +25,7 @@ RpcTestService::RpcTestService(Flower &flower)
 {
 }
 
-void RpcTestService::on_request(RpcRequest const &req, RpcResponse &res)
+void RpcTestService::on_request(Socket const &sock, RpcRequest const &req, RpcResponse &res)
 {
 	if (req.interface() != "TestService") {
 		res.status(RpcStatusCode::BadInterface);

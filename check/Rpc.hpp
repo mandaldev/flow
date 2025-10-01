@@ -27,7 +27,7 @@ public:
 	RpcTestService(Flower &flower);
 
 private:
-	void on_request(RpcRequest const &req, RpcResponse &res) override;
+	void on_request(Socket const &sock, RpcRequest const &req, RpcResponse &res) override;
 };
 
 class RpcTestClient

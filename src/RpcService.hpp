@@ -59,7 +59,7 @@ protected:
 	virtual void on_client_closed(Socket const &sock) {}
 
 	/// request hanlder
-	virtual void on_request(RpcRequest const &req, RpcResponse &res) = 0;
+	virtual void on_request(Socket const &sock, RpcRequest const &req, RpcResponse &res) = 0;
 
 private:
 	/// socket that listens to an address
