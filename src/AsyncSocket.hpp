@@ -57,6 +57,7 @@ protected:
 
 	virtual void on_peer_close(bool only_read) {}
 
+	/// called when socket has closed (notte: fd will be -1)
 	virtual void on_close() = 0;
 
 	virtual void on_error(std::shared_ptr<Error> err) = 0;

@@ -17,6 +17,7 @@
 #define FLOW_SRC_RPCSERVICE_HPP
 #include "RpcRequest.hpp"
 #include "RpcResponse.hpp"
+#include "Socket.hpp"
 #include "StreamMessageSocket.hpp"
 #include "Timer.hpp"
 #include <Com/ThreadPool.hpp>
@@ -51,6 +52,12 @@ public:
 	void init(Config const &conf, std::function<void(size_t addr_index, std::error_code)> const &on_init_failed);
 
 protected:
+	/// called when new client has connected
+	virtual void on_client_connected(Socket const &sock) {}
+
+	/// called when one client has closed
+	virtual void on_client_closed(Socket const &sock) {}
+
 	/// request hanlder
 	virtual void on_request(RpcRequest const &req, RpcResponse &res) = 0;
 

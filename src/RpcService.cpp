@@ -189,6 +189,7 @@ RpcService::ServerSocket::ServerSocket(Flower &flower, RpcService &owner, std::v
 
 void RpcService::ServerSocket::on_close()
 {
+	_owner.on_client_closed(*this);
 	_owner._servers.erase(std::dynamic_pointer_cast<ServerSocket>(shared_from_this()));
 }
 
@@ -205,6 +206,7 @@ void RpcService::ServerSocket::on_flowing(std::shared_ptr<Flow::Error> err)
 		LOG_ERROR << "Flow server socket error: '" << format_addr(_addr) << "': " << err->message();
 	} else {
 		LOG_INFO << "Server socket flowing: '" << format_addr(_addr) << "'";
+		_owner.on_client_connected(*this);
 	}
 }
 
