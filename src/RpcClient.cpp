@@ -22,6 +22,7 @@
 #include <Com/BytesView.hpp>
 #include <Com/log.hpp>
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <system_error>
 
@@ -88,6 +89,17 @@ void RpcClient::request(RpcRequest &&req, std::function<void(RpcResponse const&)
 		}
 		_requests.insert({shared_req->req.unique_id(), std::move(*shared_req)});
 	}));
+}
+
+RpcResponse RpcClient::request(RpcRequest &&req)
+{
+	std::promise<RpcResponse> res;
+	request(std::move(req), [&res](RpcResponse const &r)
+	{
+		res.set_value(r);
+	});
+	auto fut = res.get_future();
+	return fut.get();
 }
 
 bool RpcClient::is_connected() const

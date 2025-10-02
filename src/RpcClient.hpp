@@ -59,6 +59,9 @@ public:
 	/// send a rpc request, call `done` once response is received
 	void request(RpcRequest &&req, std::function<void(RpcResponse const&)> const &done);
 
+	/// sync request call, you must not call this in the same flower thread
+	RpcResponse request(RpcRequest &&req);
+
 	bool is_connected() const;
 
 private:
