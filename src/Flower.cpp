@@ -55,6 +55,7 @@ std::shared_ptr<Error> Flower::run()
 	std::shared_ptr<Error> ret;
 	auto timeout = -1ms;
 	create_event();
+	_run = true;
 	while (_run) {
 		do_calls();
 

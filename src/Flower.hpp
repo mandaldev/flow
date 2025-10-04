@@ -91,7 +91,7 @@ private:
 
 	/// which flower is runing on 'current' thred
 	static thread_local Flower const *_bound_flower;
-	std::atomic_bool _run;
+	std::atomic_bool _run {false};
 	std::atomic_int _epoll = -1;
 
 	std::shared_mutex _mtx_listeners;
