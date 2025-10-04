@@ -16,6 +16,7 @@
 #ifndef FLOW_SRC_RPC_HPP
 #define FLOW_SRC_RPC_HPP
 #include <cstdint>
+#include <ostream>
 #include <vector>
 
 namespace Flow {
@@ -60,6 +61,28 @@ enum class RpcStatusCode
 	/// bad arguments
 	BadArguments,
 };
+
+static inline std::ostream &operator<<(std::ostream &o, RpcStatusCode c)
+{
+	switch (c) {
+	case RpcStatusCode::Ok:
+		return o << "Ok";
+	case RpcStatusCode::BadInterface:
+		return o << "BadInterface";
+	case RpcStatusCode::BadMethod:
+		return o << "BadMethod";
+	case RpcStatusCode::BadVersion:
+		return o << "BadVersion";
+	case RpcStatusCode::RequestTimeout:
+		return o << "RequestTimeout";
+	case RpcStatusCode::ResponseTimeout:
+		return o << "ResponseTimeout";
+	case RpcStatusCode::BadArguments:
+		return o << "BadArguments";
+	default:
+		return o << "";
+	}
+}
 
 /// codecs those origin data has been encoded by.
 /// for example a chain of "[Mab, Zstd]" means: origin data is serialized
