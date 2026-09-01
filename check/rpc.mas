@@ -10,4 +10,6 @@
   dep [
     "Flow"
   ]
+
+  explicit_install "true"
 }

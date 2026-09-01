@@ -66,6 +66,8 @@
       dep [
         "Com"
       ]
+
+      explicit_install "true"
     }
 
     streamserver "check/streamserver.mas"
