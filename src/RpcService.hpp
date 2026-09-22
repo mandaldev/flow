@@ -43,7 +43,7 @@ public:
 		std::vector<std::string> _local_addrs;
 		/// clients wait queue size
 		int backlog = 100;
-		uint16_t threads = 1;
+		unsigned threads = 1;
 	};
 
 	RpcService(Flower &flower);
