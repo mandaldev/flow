@@ -29,8 +29,7 @@
 
 namespace Flow {
 
-/// RPC Client class
-/// all public api can be called outside of Flow thread
+/// RPC Client class. All public api can be called outside of Flow thread
 class RpcClient
 : public Com::Unique
 , public Com::EnableBindWeak<RpcClient>
@@ -38,6 +37,7 @@ class RpcClient
 public:
 	struct Config
 	{
+		/// server address: ipv4 or local socket
 		std::variant<IPv4Addr, std::string> server_addr;
 		/// timeout if wait too long to connect (than retry to connect)
 		std::chrono::milliseconds connection_timeout{10000};
@@ -50,13 +50,13 @@ public:
 
 	RpcClient(Flower &flower);
 
-	/// init may fail cause of different reasons:
+	/// init may fail because of different reasons:
 	/// - failed to create socket
 	/// - failed to connect to server
 	/// - connection timeout
 	void init(Config const &conf, std::function<void(std::error_code)> const &on_init_failed);
 
-	/// send a rpc request, call `done` once response is received
+	/// send a rpc request, call `done` once response is received or error occured
 	void request(RpcRequest &&req, std::function<void(RpcResponse const&)> const &done);
 
 	/// sync request call, you must not call this in the same flower thread

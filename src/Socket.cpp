@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "Socket.hpp"
+#include "Error.hpp"
 #include <Com/log.hpp>
 #include <cstddef>
 #include <cstring>

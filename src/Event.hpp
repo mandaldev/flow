@@ -23,6 +23,7 @@ namespace Flow {
 
 class Flower;
 
+/// Linux 事件
 class Event
 : Com::Unique
 , public Com::EnableBindWeak<Event>
@@ -38,11 +39,13 @@ public:
 	/// #better_on_flow_thread
 	std::error_code destroy();
 
+	/// 触发
 	std::error_code emit();
 
-	/// check this is valid event - successfully created.
+	/// 是否有效（成功创建）
 	bool valid() const;
 
+	/// 是否添加到 flower
 	bool flowing() const;
 
 	/// callback

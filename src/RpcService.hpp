@@ -28,8 +28,7 @@
 
 namespace Flow {
 
-/// RPC Service class
-/// all public api can be called outside of Flow thread
+/// RPC Service class. All public api can be called outside of Flow thread
 class RpcService
 : public Com::Unique
 , public Com::EnableBindWeak<RpcService>
@@ -43,6 +42,7 @@ public:
 		std::vector<std::string> local_addrs;
 		/// clients wait queue size
 		int backlog = 100;
+		/// number of threads for requests
 		unsigned threads = 1;
 	};
 

@@ -23,7 +23,7 @@
 
 namespace Flow {
 
-/// socket for streamed message
+/// Socket for streamed message - like packet, message is sent and received as an complete packet.
 class StreamMessageSocket
 : public StreamSocket
 {
@@ -35,7 +35,7 @@ public:
 
 	void send_message(std::vector<Com::Bytes> &&msg);
 
-	/// add callback for receiving message
+	/// add callback for receiving an complete message
 	void on_receive_message(std::function<void(Com::BytesView)> const &receiver);
 
 	/// set max message size (in bytes), if meet one in or out message which has larger
@@ -47,7 +47,7 @@ public:
 	uint32_t max_message_size() const;
 
 protected:
-	/// override this to receive message instead of using callback
+	/// override this to receive an complete message instead of using callback
 	virtual void on_receive_message(Com::BytesView msg);
 
 private:

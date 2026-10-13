@@ -28,8 +28,7 @@
 
 namespace Flow {
 
-/// the event loop
-/// powered by epoll, edge-triggered
+/// The event loop, powered by epoll, edge-triggered
 class Flower
 : Com::Unique
 {
@@ -55,6 +54,7 @@ public:
 
 	bool is_runing();
 
+	/// 检查调用线程是否是此 flower 绑定的
 	bool is_flow_thread();
 
 	/// #async
