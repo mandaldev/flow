@@ -51,7 +51,7 @@ void RpcService::init(Config const &conf, std::function<void(size_t addr_index, 
 
 	_conf = conf;
 	size_t addr_index = 0;
-	for (auto const &ipv4 : _conf._ip_addrs) {
+	for (auto const &ipv4 : _conf.ip_addrs) {
 		addr_index += 1;
 		auto listen_sock = std::make_shared<ListenSocket>(_flower, *this);
 		auto ec = listen_sock->setup(ipv4, _conf.backlog);
@@ -63,7 +63,7 @@ void RpcService::init(Config const &conf, std::function<void(size_t addr_index, 
 			_listen_socks.insert(listen_sock);
 		}
 	}
-	for (auto const &name : _conf._local_addrs) {
+	for (auto const &name : _conf.local_addrs) {
 		addr_index += 1;
 		auto listen_sock = std::make_shared<ListenSocket>(_flower, *this);
 		auto ec = listen_sock->setup(name, _conf.backlog);

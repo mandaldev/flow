@@ -38,9 +38,9 @@ public:
 	struct Config
 	{
 		/// ip address of the service listens on
-		std::vector<IPv4Addr> _ip_addrs;
+		std::vector<IPv4Addr> ip_addrs;
 		/// local address (abstract) of the service listens on
-		std::vector<std::string> _local_addrs;
+		std::vector<std::string> local_addrs;
 		/// clients wait queue size
 		int backlog = 100;
 		unsigned threads = 1;

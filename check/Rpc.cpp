@@ -58,7 +58,7 @@ int main(int argc, const char *argv[])
 	const auto ADDR = "flow.check.rpc_test_service";
 	Flower flower;
 	RpcService::Config conf;
-	conf._local_addrs.push_back(ADDR);
+	conf.local_addrs.push_back(ADDR);
 	auto service = std::make_shared<RpcTestService>(flower);
 	service->init(conf, [&flower](size_t addr_index, std::error_code ec)
 	{
